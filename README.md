@@ -182,6 +182,4 @@ For issues or questions, please refer to the project documentation or contact th
 
 ---
 
-**GamePlannr MVP** - Connecting parents with local sports mentors for personalized training sessions.# GamePlannr
-# GamePlannr
-# GamePlannr
+**GamePlannr MVP** - Connecting parents with local sports mentors for personalized training sessions.

@@ -30,7 +30,7 @@ const HomePage = () => {
               <img
                 key={index}
                 src={image}
-                alt={`Hero image ${index + 1}`}
+                alt={`Hero ${index + 1}`}
                 className={`slider-image ${index === currentImageIndex ? 'active' : ''}`}
               />
             ))}
