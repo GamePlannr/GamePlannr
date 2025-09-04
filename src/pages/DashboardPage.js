@@ -165,9 +165,9 @@ const DashboardPage = () => {
                           </div>
                           <div className="request-status">
                             <span className={`status-badge status-${request.status}`}>
-                              {request.status === 'pending' && '⏳ Pending'}
-                              {request.status === 'accepted' && '✅ Accepted'}
-                              {request.status === 'declined' && '❌ Declined'}
+                              {request.status === 'pending' && '◐ Pending'}
+                              {request.status === 'accepted' && '● Accepted'}
+                              {request.status === 'declined' && '○ Declined'}
                             </span>
                           </div>
                         </div>
@@ -195,9 +195,9 @@ const DashboardPage = () => {
                           </div>
                           <div className="session-status">
                             <span className={`status-badge status-${session.status}`}>
-                              {session.status === 'awaiting_payment' && '💳 Awaiting Payment'}
-                              {session.status === 'paid' && '✅ Paid'}
-                              {session.status === 'confirmed' && '🎯 Confirmed'}
+                              {session.status === 'awaiting_payment' && '◐ Awaiting Payment'}
+                              {session.status === 'paid' && '● Paid'}
+                              {session.status === 'confirmed' && '● Confirmed'}
                             </span>
                           </div>
                         </div>

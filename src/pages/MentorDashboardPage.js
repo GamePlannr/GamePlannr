@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
 import Navbar from '../components/Navbar';
@@ -74,7 +74,17 @@ const MentorDashboardPage = () => {
       if (!request) return;
 
       // Create a session in the sessions table
-      const { error: sessionError } = await supabase
+      console.log('Creating session with data:', {
+        parent_id: request.parent_id,
+        mentor_id: request.mentor_id,
+        scheduled_date: request.preferred_date,
+        scheduled_time: request.preferred_time,
+        location: request.location,
+        status: 'awaiting_payment',
+        session_request_id: requestId
+      });
+
+      const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
         .insert([
           {
@@ -83,7 +93,6 @@ const MentorDashboardPage = () => {
             scheduled_date: request.preferred_date,
             scheduled_time: request.preferred_time,
             location: request.location,
-            notes: request.notes,
             status: 'awaiting_payment',
             session_request_id: requestId
           }
@@ -91,9 +100,11 @@ const MentorDashboardPage = () => {
         .select()
         .single();
 
+      console.log('Session creation result:', { sessionData, sessionError });
+
       if (sessionError) {
         console.error('Error creating session:', sessionError);
-        setError('Failed to accept request. Please try again.');
+        setError(`Failed to accept request: ${sessionError.message}`);
         return;
       }
 
@@ -105,20 +116,20 @@ const MentorDashboardPage = () => {
 
       if (updateError) {
         console.error('Error updating request status:', updateError);
-        setError('Failed to update request status. Please try again.');
+        setError(`Failed to update request status: ${updateError.message}`);
         return;
       }
 
       // Show success message
-      setSuccess(`✅ Session request accepted! Session created and parent has been notified.`);
+      setSuccess(`● Session request accepted! Session created and parent has been notified.`);
       
       // Refresh the session requests
       await fetchSessionRequests();
 
-      // Redirect to dashboard after 3 seconds
+      // Redirect to dashboard after 2 seconds
       setTimeout(() => {
         navigate('/mentor-dashboard');
-      }, 3000);
+      }, 2000);
 
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -141,20 +152,20 @@ const MentorDashboardPage = () => {
 
       if (error) {
         console.error('Error declining request:', error);
-        setError('Failed to decline request. Please try again.');
+        setError(`Failed to decline request: ${error.message}`);
         return;
       }
 
       // Show success message
-      setSuccess(`❌ Session request declined. Parent has been notified.`);
+      setSuccess(`○ Session request declined. Parent has been notified.`);
       
       // Refresh the session requests
       await fetchSessionRequests();
 
-      // Redirect to dashboard after 3 seconds
+      // Redirect to dashboard after 2 seconds
       setTimeout(() => {
         navigate('/mentor-dashboard');
-      }, 3000);
+      }, 2000);
 
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -216,7 +227,9 @@ const MentorDashboardPage = () => {
       <main className="mentor-dashboard-main">
         <div className="mentor-dashboard-container">
           <div className="dashboard-header">
-            <h1>Mentor Dashboard</h1>
+            <h1>Welcome back, {profile?.first_name}!</h1>
+            <p>Role: {profile?.role?.charAt(0).toUpperCase() + profile?.role?.slice(1)}</p>
+            <h2>Mentor Dashboard</h2>
             <p>Manage your session requests and upcoming sessions</p>
           </div>
 
@@ -306,19 +319,37 @@ const MentorDashboardPage = () => {
 
                       {request.status === 'accepted' && (
                         <div className="request-status-info">
-                          <p className="status-message">✅ Request accepted! Session created and awaiting payment.</p>
+                          <p className="status-message">● Request accepted! Session created and awaiting payment.</p>
                         </div>
                       )}
 
                       {request.status === 'declined' && (
                         <div className="request-status-info">
-                          <p className="status-message">❌ Request declined.</p>
+                          <p className="status-message">○ Request declined.</p>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="sessions-section">
+              <h2>Your Sessions</h2>
+              <div className="sessions-placeholder">
+                <p>Your confirmed sessions will appear here once parents complete payment.</p>
+              </div>
+            </div>
+
+            <div className="mentor-actions">
+              <Link to="/profile" className="action-card">
+                <h3>Update Profile</h3>
+                <p>Keep your mentor profile current</p>
+              </Link>
+              <Link to="/mentors" className="action-card">
+                <h3>View Public Profile</h3>
+                <p>See how parents see your profile</p>
+              </Link>
             </div>
           </div>
         </div>
