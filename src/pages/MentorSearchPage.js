@@ -35,10 +35,6 @@ const MentorSearchPage = () => {
     'WI', 'WY'
   ];
 
-  useEffect(() => {
-    fetchMentors();
-  }, [fetchMentors]);
-
   const fetchMentors = useCallback(async () => {
     try {
       setLoading(true);
@@ -75,6 +71,10 @@ const MentorSearchPage = () => {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    fetchMentors();
+  }, [fetchMentors]);
 
   useEffect(() => {
     // Filter mentors based on search criteria

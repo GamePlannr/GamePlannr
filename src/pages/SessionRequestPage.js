@@ -22,20 +22,6 @@ const SessionRequestPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/signin');
-      return;
-    }
-
-    if (profile?.role !== 'parent') {
-      navigate('/dashboard');
-      return;
-    }
-
-    fetchMentorDetails();
-  }, [user, profile, mentorId, navigate, fetchMentorDetails]);
-
   const fetchMentorDetails = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -57,6 +43,20 @@ const SessionRequestPage = () => {
       setError('Failed to load mentor details');
     }
   }, [mentorId]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
+
+    if (profile?.role !== 'parent') {
+      navigate('/dashboard');
+      return;
+    }
+
+    fetchMentorDetails();
+  }, [user, profile, mentorId, navigate, fetchMentorDetails]);
 
   const handleChange = (e) => {
     setFormData({

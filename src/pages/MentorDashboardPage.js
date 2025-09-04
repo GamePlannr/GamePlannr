@@ -16,20 +16,6 @@ const MentorDashboardPage = () => {
   const [success, setSuccess] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/signin');
-      return;
-    }
-
-    if (profile?.role !== 'mentor') {
-      navigate('/dashboard');
-      return;
-    }
-
-    fetchSessionRequests();
-  }, [user, profile, navigate, fetchSessionRequests]);
-
   const fetchSessionRequests = useCallback(async () => {
     try {
       setLoading(true);
@@ -62,6 +48,20 @@ const MentorDashboardPage = () => {
       setLoading(false);
     }
   }, [user.id]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
+
+    if (profile?.role !== 'mentor') {
+      navigate('/dashboard');
+      return;
+    }
+
+    fetchSessionRequests();
+  }, [user, profile, navigate, fetchSessionRequests]);
 
   const handleAcceptRequest = async (requestId) => {
     try {

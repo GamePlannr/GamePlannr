@@ -14,25 +14,6 @@ const DashboardPage = () => {
   const [sessions, setSessions] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
 
-  useEffect(() => {
-    // Redirect mentors to mentor dashboard
-    if (profile?.role === 'mentor') {
-      navigate('/mentor-dashboard');
-      return;
-    }
-
-    // Check if user came from mentor search with selected mentor
-    if (location.state?.selectedMentor) {
-      setSelectedMentor(location.state.selectedMentor);
-    }
-
-    // Fetch session requests and sessions for parents
-    if (profile?.role === 'parent') {
-      fetchSessionRequests();
-      fetchSessions();
-    }
-  }, [profile, navigate, location.state, fetchSessionRequests, fetchSessions]);
-
   const fetchSessionRequests = useCallback(async () => {
     try {
       setRequestsLoading(true);
@@ -87,6 +68,25 @@ const DashboardPage = () => {
       console.error('Unexpected error:', err);
     }
   }, [user.id]);
+
+  useEffect(() => {
+    // Redirect mentors to mentor dashboard
+    if (profile?.role === 'mentor') {
+      navigate('/mentor-dashboard');
+      return;
+    }
+
+    // Check if user came from mentor search with selected mentor
+    if (location.state?.selectedMentor) {
+      setSelectedMentor(location.state.selectedMentor);
+    }
+
+    // Fetch session requests and sessions for parents
+    if (profile?.role === 'parent') {
+      fetchSessionRequests();
+      fetchSessions();
+    }
+  }, [profile, navigate, location.state, fetchSessionRequests, fetchSessions]);
 
   if (loading) {
     return <div className="loading">Loading...</div>;
