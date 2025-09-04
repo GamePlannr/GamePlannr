@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './SignInPage.css';
 
@@ -10,9 +10,18 @@ const SignInPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedMentor, setSelectedMentor] = useState(null);
 
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if user came from mentor search with selected mentor
+    if (location.state?.selectedMentor) {
+      setSelectedMentor(location.state.selectedMentor);
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     setFormData({
@@ -32,7 +41,12 @@ const SignInPage = () => {
       if (error) {
         setError(error.message);
       } else {
-        navigate('/dashboard');
+        // Navigate to dashboard with selected mentor info
+        if (selectedMentor) {
+          navigate('/dashboard', { state: { selectedMentor } });
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -47,6 +61,11 @@ const SignInPage = () => {
         <div className="signin-header">
           <h1>Welcome Back</h1>
           <p>Sign in to your GamePlannr account</p>
+          {selectedMentor && (
+            <div className="mentor-selection-notice">
+              <p>You're signing in to request a session with a mentor!</p>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="signin-form">

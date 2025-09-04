@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './SignUpPage.css';
 
@@ -20,9 +20,18 @@ const SignUpPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedMentor, setSelectedMentor] = useState(null);
 
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if user came from mentor search with selected mentor
+    if (location.state?.selectedMentor) {
+      setSelectedMentor(location.state.selectedMentor);
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     setFormData({
@@ -61,7 +70,7 @@ const SignUpPage = () => {
       return;
     }
 
-    if (!formData.firstName || !formData.lastName || !formData.age || !formData.city || !formData.state || !formData.sport) {
+    if (!formData.firstName || !formData.lastName || !formData.city || !formData.state || !formData.sport) {
       setError('Please fill in all required fields');
       return;
     }
@@ -85,7 +94,12 @@ const SignUpPage = () => {
         setError(error.message || 'An error occurred during signup');
       } else {
         setSuccess('Account created successfully! Please check your email to verify your account.');
-        navigate('/signin');
+        // Navigate to sign in with selected mentor info
+        if (selectedMentor) {
+          navigate('/signin', { state: { selectedMentor } });
+        } else {
+          navigate('/signin');
+        }
       }
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -125,6 +139,11 @@ const SignUpPage = () => {
         <div className="signup-header">
           <h1>Join GamePlannr</h1>
           <p>Create your account to connect with sports mentors</p>
+          {selectedMentor && (
+            <div className="mentor-selection-notice">
+              <p>You're signing up to request a session with a mentor!</p>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="signup-form">
@@ -193,34 +212,19 @@ const SignUpPage = () => {
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="age">Age *</label>
-              <input
-                type="number"
-                id="age"
-                name="age"
-                min="5"
-                max="100"
-                value={formData.age}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="role">Role *</label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select a role</option>
-                <option value="parent">Parent</option>
-                <option value="mentor">Mentor</option>
-              </select>
-            </div>
+          <div className="form-group">
+            <label htmlFor="role">Role *</label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select a role</option>
+              <option value="parent">Parent</option>
+              <option value="mentor">Mentor</option>
+            </select>
           </div>
 
           <div className="form-row">

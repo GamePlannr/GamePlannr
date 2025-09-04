@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './HomePage.css';
@@ -41,6 +42,14 @@ const HomePage = () => {
           <p>
             Helping youth athletes connect with mentors to grow in confidence, skills, and game sense. Sign up today to join the movement!
           </p>
+          <div className="hero-actions">
+            <Link to="/mentors" className="btn btn-primary">
+              Find Mentors
+            </Link>
+            <Link to="/signup" className="btn btn-secondary">
+              Get Started
+            </Link>
+          </div>
         </div>
       </main>
 

@@ -10,6 +10,9 @@ import SignInPage from './pages/SignInPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import TermsPage from './pages/TermsPage';
+import MentorSearchPage from './pages/MentorSearchPage';
+import SessionRequestPage from './pages/SessionRequestPage';
+import MentorDashboardPage from './pages/MentorDashboardPage';
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -42,6 +45,23 @@ function App() {
             {/* Public routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/mentors" element={<MentorSearchPage />} />
+            <Route 
+              path="/request-session/:mentorId" 
+              element={
+                <ProtectedRoute>
+                  <SessionRequestPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/mentor-dashboard" 
+              element={
+                <ProtectedRoute>
+                  <MentorDashboardPage />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/signup" 
               element={
