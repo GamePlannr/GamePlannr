@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
@@ -31,9 +31,9 @@ const DashboardPage = () => {
       fetchSessionRequests();
       fetchSessions();
     }
-  }, [profile, navigate, location.state]);
+  }, [profile, navigate, location.state, fetchSessionRequests, fetchSessions]);
 
-  const fetchSessionRequests = async () => {
+  const fetchSessionRequests = useCallback(async () => {
     try {
       setRequestsLoading(true);
       const { data, error } = await supabase
@@ -60,9 +60,9 @@ const DashboardPage = () => {
     } finally {
       setRequestsLoading(false);
     }
-  };
+  }, [user.id]);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('sessions')
@@ -86,7 +86,7 @@ const DashboardPage = () => {
     } catch (err) {
       console.error('Unexpected error:', err);
     }
-  };
+  }, [user.id]);
 
   if (loading) {
     return <div className="loading">Loading...</div>;

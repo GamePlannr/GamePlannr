@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
 import Navbar from '../components/Navbar';
@@ -9,7 +9,6 @@ import './SessionRequestPage.css';
 const SessionRequestPage = () => {
   const { mentorId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, profile } = useAuth();
   
   const [mentor, setMentor] = useState(null);
@@ -35,9 +34,9 @@ const SessionRequestPage = () => {
     }
 
     fetchMentorDetails();
-  }, [user, profile, mentorId, navigate]);
+  }, [user, profile, mentorId, navigate, fetchMentorDetails]);
 
-  const fetchMentorDetails = async () => {
+  const fetchMentorDetails = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -57,7 +56,7 @@ const SessionRequestPage = () => {
       console.error('Unexpected error:', err);
       setError('Failed to load mentor details');
     }
-  };
+  }, [mentorId]);
 
   const handleChange = (e) => {
     setFormData({
@@ -81,7 +80,7 @@ const SessionRequestPage = () => {
 
     try {
       // Create session request
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('session_requests')
         .insert([
           {

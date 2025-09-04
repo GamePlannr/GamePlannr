@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
@@ -28,9 +28,9 @@ const MentorDashboardPage = () => {
     }
 
     fetchSessionRequests();
-  }, [user, profile, navigate]);
+  }, [user, profile, navigate, fetchSessionRequests]);
 
-  const fetchSessionRequests = async () => {
+  const fetchSessionRequests = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -61,7 +61,7 @@ const MentorDashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id]);
 
   const handleAcceptRequest = async (requestId) => {
     try {
@@ -74,7 +74,7 @@ const MentorDashboardPage = () => {
       if (!request) return;
 
       // Create a session in the sessions table
-      const { data: sessionData, error: sessionError } = await supabase
+      const { error: sessionError } = await supabase
         .from('sessions')
         .insert([
           {

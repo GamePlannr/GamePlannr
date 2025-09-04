@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
 import Navbar from '../components/Navbar';
@@ -9,7 +9,6 @@ import './MentorSearchPage.css';
 const MentorSearchPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
   const [searchFilters, setSearchFilters] = useState({
     city: '',
@@ -38,9 +37,9 @@ const MentorSearchPage = () => {
 
   useEffect(() => {
     fetchMentors();
-  }, [user]);
+  }, [fetchMentors]);
 
-  const fetchMentors = async () => {
+  const fetchMentors = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -75,7 +74,7 @@ const MentorSearchPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     // Filter mentors based on search criteria
