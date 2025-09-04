@@ -1,0 +1,112 @@
+.terms-page {
+  min-height: 100vh;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.terms-container {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 120px 20px 40px 20px;
+}
+
+.terms-title {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #4A4A9B;
+  text-align: center;
+  margin-bottom: 50px;
+  margin-top: 20px;
+}
+
+.terms-section {
+  margin-bottom: 40px;
+}
+
+.terms-section h2 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #4A4A9B;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+.terms-section h3 {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 15px;
+  margin-top: 25px;
+  line-height: 1.3;
+}
+
+.terms-section p {
+  font-size: 1rem;
+  color: #333333;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.terms-section p:last-child {
+  margin-bottom: 0;
+}
+
+.terms-section strong {
+  font-weight: bold;
+}
+
+.safety-tips {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.safety-tips li {
+  font-size: 1rem;
+  color: #333333;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.safety-tips li:last-child {
+  margin-bottom: 0;
+}
+
+.contact-link {
+  color: #4A4A9B;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.contact-link:hover {
+  color: #3A3A8B;
+}
+
+@media (max-width: 768px) {
+  .terms-container {
+    padding: 100px 15px 30px 15px;
+  }
+  
+  .terms-title {
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+  }
+  
+  .terms-section h2 {
+    font-size: 1.6rem;
+  }
+  
+  .terms-section h3 {
+    font-size: 1.2rem;
+  }
+  
+  .terms-section p {
+    font-size: 0.95rem;
+  }
+  
+  .safety-tips li {
+    font-size: 0.95rem;
+  }
+}
