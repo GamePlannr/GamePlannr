@@ -1,14 +1,11 @@
 import React from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './PaymentCancelledPage.css';
 
 const PaymentCancelledPage = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
-  const sessionId = searchParams.get('session_id');
 
   return (
     <div className="payment-cancelled-page">
