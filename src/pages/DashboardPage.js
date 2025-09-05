@@ -199,6 +199,14 @@ const DashboardPage = () => {
                               {session.status === 'paid' && '● Paid'}
                               {session.status === 'confirmed' && '● Confirmed'}
                             </span>
+                            {session.status === 'awaiting_payment' && (
+                              <Link 
+                                to={`/payment/${session.id}`} 
+                                className="btn btn-payment"
+                              >
+                                Complete Payment
+                              </Link>
+                            )}
                           </div>
                         </div>
                       ))}

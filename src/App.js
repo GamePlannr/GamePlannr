@@ -13,6 +13,9 @@ import TermsPage from './pages/TermsPage';
 import MentorSearchPage from './pages/MentorSearchPage';
 import SessionRequestPage from './pages/SessionRequestPage';
 import MentorDashboardPage from './pages/MentorDashboardPage';
+import PaymentPage from './pages/PaymentPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import PaymentCancelledPage from './pages/PaymentCancelledPage';
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -59,6 +62,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MentorDashboardPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/payment/:sessionId" 
+              element={
+                <ProtectedRoute>
+                  <PaymentPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/payment-success" 
+              element={
+                <ProtectedRoute>
+                  <PaymentSuccessPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/payment-cancelled" 
+              element={
+                <ProtectedRoute>
+                  <PaymentCancelledPage />
                 </ProtectedRoute>
               } 
             />
