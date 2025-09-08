@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'http://localhost:3000',
+  'Access-Control-Allow-Origin': 'https://gameplannrmvp.netlify.app/',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Credentials': 'true',
@@ -28,7 +28,7 @@ serve(async (req) => {
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') // You need to replace this with your actual Stripe test key
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'http://127.0.0.1:54321'
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
-    const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000'
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://gameplannrmvp.netlify.app/'
 
     if (!stripeSecretKey) {
       throw new Error('Please set a valid Stripe secret key. Get one from https://dashboard.stripe.com/test/apikeys')

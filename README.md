@@ -104,7 +104,7 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
 npm start
 ```
 
-The application will open at `http://localhost:3000`
+The application will open at `https://gameplannrmvp.netlify.app/`
 
 ## 📱 Application Structure
 
