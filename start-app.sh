@@ -5,7 +5,7 @@
 echo "🚀 Starting GamePlannr with Docker..."
 
 # Check if Supabase is running
-if ! curl -s http://127.0.0.1:54321 > /dev/null; then
+if ! curl -s https://jsiyenbnoxeuimiytuzq.supabase.co > /dev/null; then
     echo "⚠️  Supabase is not running. Starting Supabase..."
     supabase start
     echo "✅ Supabase started!"

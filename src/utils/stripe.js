@@ -46,6 +46,9 @@ export const createCheckoutSession = async (sessionId, amount, mentorName, sessi
       throw new Error('Supabase URL not configured. Please set REACT_APP_SUPABASE_URL in your environment variables.');
     }
 
+    console.log('Making request to:', `${supabaseUrl}/functions/v1/create-checkout-sessions`);
+    console.log('Request data:', { sessionId, amount, mentorName, sessionDate, sessionTime });
+    
     const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-sessions`, {
       method: 'POST',
       headers: {
@@ -60,6 +63,9 @@ export const createCheckoutSession = async (sessionId, amount, mentorName, sessi
         sessionTime,
       }),
     });
+    
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -91,6 +97,7 @@ export const redirectToCheckout = async (sessionId, amount, mentorName, sessionD
 
     // Check if we're in development mode (local Supabase)
     const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+    // const isLocalDev = supabaseUrl && supabaseUrl.includes('127.0.0.1');
     
     /*if (isLocalDev) {
       // For local development, use mock payment that simulates Stripe checkout
@@ -146,6 +153,9 @@ export const redirectToCheckout = async (sessionId, amount, mentorName, sessionD
     }
 
     // Create checkout session via Supabase Edge Function
+    console.log('Making request to:', `${supabaseUrl}/functions/v1/create-checkout-sessions`);
+    console.log('Request data:', { sessionId, amount, mentorName, sessionDate, sessionTime });
+    
     const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-sessions`, {
       method: 'POST',
       headers: {
@@ -160,6 +170,9 @@ export const redirectToCheckout = async (sessionId, amount, mentorName, sessionD
         sessionTime,
       }),
     });
+    
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorData = await response.json();

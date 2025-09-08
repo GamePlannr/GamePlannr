@@ -139,7 +139,7 @@ const PaymentSuccessPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sessionId, user, navigate, stripeSessionId]);
+  }, [sessionId, user, stripeSessionId, navigate]);
 
   useEffect(() => {
     console.log('PaymentSuccessPage useEffect triggered');

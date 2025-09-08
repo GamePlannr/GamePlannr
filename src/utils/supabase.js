@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 // Replace these with your actual Supabase project URL and anon key
 // You'll get these from your Supabase project settings
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://jsiyenbnoxeuimiytuzq.supabase.co'
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzaXllbmJub3hldWltaXl0dXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5MjYwMjgsImV4cCI6MjA3MjUwMjAyOH0.YNWLd_9pwztYASjbwRINBIAbT9eYu1YFe4W4zp5evt0'
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
 
 // Debug logging
 console.log('Supabase URL:', supabaseUrl)
