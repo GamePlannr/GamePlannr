@@ -116,28 +116,45 @@ export const AuthProvider = ({ children }) => {
         console.log('User created, attempting to create profile...')
         
         // Create profile in profiles table
+        const profileToInsert = {
+          id: data.user.id,
+          email: data.user.email,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          age: userData.age,
+          city: userData.city,
+          state: userData.state,
+          sport: userData.sport,
+          additional_sport: userData.additionalSport || null,
+          role: userData.role,
+          profile_picture_url: userData.profilePictureUrl || null,
+          created_at: new Date().toISOString(),
+        }
+
+        // Add a small delay to ensure user is fully created in auth.users
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              email: data.user.email,
-              first_name: userData.firstName,
-              last_name: userData.lastName,
-              age: userData.age,
-              city: userData.city,
-              state: userData.state,
-              sport: userData.sport,
-              role: userData.role,
-              created_at: new Date().toISOString(),
-            },
-          ])
+          .insert([profileToInsert])
 
         console.log('Profile creation result:', { profileError })
 
         if (profileError) {
           console.error('Profile creation error:', profileError)
           throw profileError
+        }
+
+        // Handle profile picture upload if provided
+        if (userData.profilePictureUrl && userData.profilePictureUrl.startsWith('data:')) {
+          console.log('Uploading profile picture from data URL...')
+          try {
+            await uploadProfilePictureFromDataUrl(data.user.id, userData.profilePictureUrl)
+            console.log('Profile picture uploaded successfully')
+          } catch (uploadError) {
+            console.error('Error uploading profile picture:', uploadError)
+            // Don't throw error - profile creation was successful
+          }
         }
         
         // Force sign out after successful signup to clear the access token
@@ -278,6 +295,49 @@ export const AuthProvider = ({ children }) => {
       return { error: null }
     } catch (error) {
       return { error }
+    }
+  }
+
+  // Helper function to upload profile picture from data URL
+  const uploadProfilePictureFromDataUrl = async (userId, dataUrl) => {
+    try {
+      // Convert data URL to blob
+      const response = await fetch(dataUrl)
+      const blob = await response.blob()
+      
+      // Generate unique filename
+      const fileExt = blob.type.split('/')[1] || 'jpg'
+      const fileName = `${userId}-${Date.now()}.${fileExt}`
+      const filePath = `avatars/${fileName}`
+      
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, blob)
+      
+      if (uploadError) {
+        throw uploadError
+      }
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+      
+      // Update profile with new image URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture_url: publicUrl })
+        .eq('id', userId)
+      
+      if (updateError) {
+        throw updateError
+      }
+      
+      return publicUrl
+    } catch (error) {
+      console.error('Error uploading profile picture:', error)
+      throw error
     }
   }
 

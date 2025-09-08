@@ -14,7 +14,7 @@ const PaymentCancelledPage = () => {
       <main className="cancelled-main">
         <div className="cancelled-container">
           <div className="cancelled-header">
-            <div className="cancelled-icon">○</div>
+            <div className="cancelled-icon">✕</div>
             <h1>Payment Cancelled</h1>
             <p>Your payment was cancelled. No charges have been made.</p>
           </div>

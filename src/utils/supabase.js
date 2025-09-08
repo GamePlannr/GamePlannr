@@ -12,7 +12,7 @@ console.log('Supabase Anon Key (first 20 chars):', supabaseAnonKey.substring(0, 
 // Create Supabase client with error handling
 let supabase = null
 try {
-  if (supabaseUrl && supabaseAnonKey && supabaseUrl.includes('supabase.co')) {
+  if (supabaseUrl && supabaseAnonKey) {
     supabase = createClient(supabaseUrl, supabaseAnonKey)
     console.log('Supabase client created successfully')
   } else {

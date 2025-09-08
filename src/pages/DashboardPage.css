@@ -242,6 +242,66 @@
   box-shadow: 0 2px 8px rgba(99, 91, 255, 0.3);
 }
 
+.btn-rate {
+  background: #ffc107;
+  color: #212529;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  min-width: 120px;
+  text-align: center;
+}
+
+.btn-rate:hover {
+  background: #e0a800;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.rating-submitted {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.rating-badge {
+  color: #28a745;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  background: #d4edda;
+  border-radius: 6px;
+  border: 1px solid #c3e6cb;
+  text-align: center;
+}
+
+.rating-review {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 8px 12px;
+  max-width: 200px;
+}
+
+.review-text {
+  font-size: 0.8rem;
+  color: #495057;
+  margin: 0;
+  font-style: italic;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
 .status-badge {
   padding: 6px 12px;
   border-radius: 20px;
@@ -282,6 +342,12 @@
 }
 
 .status-confirmed {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.status-completed {
   background: #d1ecf1;
   color: #0c5460;
   border: 1px solid #bee5eb;

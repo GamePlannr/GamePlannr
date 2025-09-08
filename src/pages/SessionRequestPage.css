@@ -41,8 +41,8 @@
 }
 
 .mentor-summary {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  color: white;
+  background: white;
+  /* color: white; */
   padding: 30px;
   display: flex;
   align-items: center;
@@ -58,6 +58,14 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.mentor-avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .avatar-initials {
@@ -72,18 +80,21 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0 0 8px 0;
+  color: white;
 }
 
 .mentor-sport {
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0 0 5px 0;
+  color: white;
   opacity: 0.9;
 }
 
 .mentor-location {
   font-size: 1rem;
   margin: 0;
+  color: white;
   opacity: 0.8;
 }
 
@@ -296,4 +307,25 @@
   .request-form {
     padding: 20px 15px;
   }
+}
+
+/* Payment method field styling */
+.other-payment-input {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.other-payment-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.other-payment-input::placeholder {
+  color: #6c757d;
 }

@@ -16,7 +16,9 @@ const SessionRequestPage = () => {
     preferredDate: '',
     preferredTime: '',
     location: '',
-    notes: ''
+    notes: '',
+    paymentMethod: '',
+    otherPaymentMethod: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -90,6 +92,8 @@ const SessionRequestPage = () => {
             preferred_time: formData.preferredTime,
             location: formData.location,
             notes: formData.notes || null,
+            payment_method: formData.paymentMethod,
+            other_payment_method: formData.paymentMethod === 'other' ? formData.otherPaymentMethod : null,
             status: 'pending'
           }
         ])
@@ -149,13 +153,21 @@ const SessionRequestPage = () => {
           <div className="request-content">
             <div className="mentor-summary">
               <div className="mentor-avatar">
-                <span className="avatar-initials">
-                  {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
-                </span>
+                {mentor.profile_picture_url ? (
+                  <img 
+                    src={mentor.profile_picture_url} 
+                    alt={`${mentor.first_name} ${mentor.last_name}`}
+                    className="mentor-avatar-image"
+                  />
+                ) : (
+                  <span className="avatar-initials">
+                    {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
+                  </span>
+                )}
               </div>
               <div className="mentor-details">
                 <h3>{mentor.first_name} {mentor.last_name}</h3>
-                <p className="mentor-sport">{mentor.sport}</p>
+                <p className="mentor-sport">{mentor.sport}, {mentor.additional_sport}</p>
                 <p className="mentor-location">{mentor.city}, {mentor.state}</p>
               </div>
             </div>
@@ -217,6 +229,37 @@ const SessionRequestPage = () => {
                     placeholder="Any specific skills you'd like to focus on, special requirements, or other details..."
                     rows="4"
                   />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="paymentMethod">Preferred Way to Pay Mentor *</label>
+                  <select
+                    id="paymentMethod"
+                    name="paymentMethod"
+                    value={formData.paymentMethod}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select payment method</option>
+                    <option value="cash">Cash</option>
+                    <option value="venmo">Venmo</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="zelle">Zelle</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="other">Other</option>
+                  </select>
+                  
+                  {formData.paymentMethod === 'other' && (
+                    <input
+                      type="text"
+                      name="otherPaymentMethod"
+                      value={formData.otherPaymentMethod}
+                      onChange={handleChange}
+                      placeholder="Please specify your preferred payment method"
+                      className="other-payment-input"
+                      required
+                    />
+                  )}
                 </div>
               </div>
 

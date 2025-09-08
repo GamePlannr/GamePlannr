@@ -88,7 +88,7 @@ const PaymentPage = () => {
       setError('');
 
       // Set session price (you can make this configurable)
-      const sessionPrice = 5; // $5 per session
+      const sessionPrice = 4; // $4 per session for MVP
       const amount = sessionPrice * 100; // Convert to cents
 
       const mentorName = `${mentor.first_name} ${mentor.last_name}`;
@@ -143,7 +143,7 @@ const PaymentPage = () => {
       <div className="payment-page">
         <Navbar />
         <div className="error-container">
-          <div className="error-icon">⚠</div>
+          <div className="error-icon">!</div>
           <h2>Payment Error</h2>
           <p>{error}</p>
           <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
@@ -160,7 +160,7 @@ const PaymentPage = () => {
       <div className="payment-page">
         <Navbar />
         <div className="error-container">
-          <div className="error-icon">⚠</div>
+          <div className="error-icon">!</div>
           <h2>Session Not Found</h2>
           <p>The session you're looking for could not be found.</p>
           <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
@@ -187,9 +187,17 @@ const PaymentPage = () => {
             <div className="session-summary">
               <div className="mentor-info">
                 <div className="mentor-avatar">
-                  <span className="avatar-initials">
-                    {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
-                  </span>
+                  {mentor.profile_picture_url ? (
+                    <img 
+                      src={mentor.profile_picture_url} 
+                      alt={`${mentor.first_name} ${mentor.last_name}`}
+                      className="mentor-avatar-image"
+                    />
+                  ) : (
+                    <span className="avatar-initials">
+                      {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
+                    </span>
+                  )}
                 </div>
                 <div className="mentor-details">
                   <h3>{mentor.first_name} {mentor.last_name}</h3>
@@ -219,12 +227,12 @@ const PaymentPage = () => {
               <div className="price-breakdown">
                 <h4>Price Breakdown</h4>
                 <div className="price-item">
-                  <span>Training Session</span>
-                  <span>$5.00</span>
+                  <span>Booking Session Fee</span>
+                  <span>$4.00</span>
                 </div>
                 <div className="price-item total">
                   <span>Total</span>
-                  <span>$5.00</span>
+                  <span>$4.00</span>
                 </div>
               </div>
 
@@ -234,10 +242,10 @@ const PaymentPage = () => {
                   disabled={paymentLoading}
                   className="btn btn-payment"
                 >
-                  {paymentLoading ? 'Processing Payment...' : 'Pay $5.00 with Stripe'}
+                  {paymentLoading ? 'Processing Payment...' : 'Pay $4.00 with Stripe'}
                 </button>
                 <p className="payment-note">
-                  For this MVP demo, payment will be simulated. In production, you would be redirected to Stripe's secure checkout page.
+                  <strong>MVP Demo Mode:</strong> Payment will be simulated for testing. In production, you would be redirected to Stripe's secure payment page.
                 </p>
               </div>
             </div>

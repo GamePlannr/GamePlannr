@@ -11,6 +11,7 @@ const MentorDashboardPage = () => {
   const { user, profile } = useAuth();
   
   const [sessionRequests, setSessionRequests] = useState([]);
+  const [confirmedSessions, setConfirmedSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -49,6 +50,33 @@ const MentorDashboardPage = () => {
     }
   }, [user.id]);
 
+  const fetchConfirmedSessions = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select(`
+          *,
+          parent:parent_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('mentor_id', user.id)
+        .in('status', ['paid', 'confirmed'])
+        .order('scheduled_date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching confirmed sessions:', error);
+        return;
+      }
+
+      setConfirmedSessions(data || []);
+    } catch (err) {
+      console.error('Unexpected error fetching confirmed sessions:', err);
+    }
+  }, [user.id]);
+
   useEffect(() => {
     if (!user) {
       navigate('/signin');
@@ -61,7 +89,8 @@ const MentorDashboardPage = () => {
     }
 
     fetchSessionRequests();
-  }, [user, profile, navigate, fetchSessionRequests]);
+    fetchConfirmedSessions();
+  }, [user, profile, navigate, fetchSessionRequests, fetchConfirmedSessions]);
 
   const handleAcceptRequest = async (requestId) => {
     try {
@@ -121,7 +150,7 @@ const MentorDashboardPage = () => {
       }
 
       // Show success message
-      setSuccess(`● Session request accepted! Session created and parent has been notified.`);
+      setSuccess(`✓ Session request accepted! Session created and parent has been notified.`);
       
       // Refresh the session requests
       await fetchSessionRequests();
@@ -157,7 +186,7 @@ const MentorDashboardPage = () => {
       }
 
       // Show success message
-      setSuccess(`○ Session request declined. Parent has been notified.`);
+      setSuccess(`✕ Session request declined. Parent has been notified.`);
       
       // Refresh the session requests
       await fetchSessionRequests();
@@ -167,6 +196,31 @@ const MentorDashboardPage = () => {
         navigate('/mentor-dashboard');
       }, 2000);
 
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleMarkCompleted = async (sessionId) => {
+    try {
+      setActionLoading(sessionId);
+      setError('');
+      setSuccess('');
+
+      const { error } = await supabase
+        .from('sessions')
+        .update({ status: 'completed' })
+        .eq('id', sessionId);
+
+      if (error) {
+        throw error;
+      }
+
+      setSuccess('✓ Session marked as completed. Parent can now rate the session.');
+      await fetchConfirmedSessions();
     } catch (err) {
       console.error('Unexpected error:', err);
       setError('An unexpected error occurred. Please try again.');
@@ -254,7 +308,7 @@ const MentorDashboardPage = () => {
               
               {sessionRequests.length === 0 ? (
                 <div className="no-requests">
-                  <div className="no-requests-icon">📋</div>
+                  <div className="no-requests-icon">📄</div>
                   <h3>No Session Requests Yet</h3>
                   <p>When parents request sessions with you, they'll appear here for you to review and respond to.</p>
                 </div>
@@ -265,9 +319,17 @@ const MentorDashboardPage = () => {
                       <div className="request-header">
                         <div className="parent-info">
                           <div className="parent-avatar">
-                            <span className="avatar-initials">
-                              {request.parent?.first_name?.[0] || 'P'}{request.parent?.last_name?.[0] || 'P'}
-                            </span>
+                            {request.parent?.profile_picture_url ? (
+                              <img 
+                                src={request.parent.profile_picture_url} 
+                                alt={`${request.parent.first_name} ${request.parent.last_name}`}
+                                className="parent-avatar-image"
+                              />
+                            ) : (
+                              <span className="avatar-initials">
+                                {request.parent?.first_name?.[0] || 'P'}{request.parent?.last_name?.[0] || 'P'}
+                              </span>
+                            )}
                           </div>
                           <div className="parent-details">
                             <h3>{request.parent?.first_name} {request.parent?.last_name}</h3>
@@ -290,6 +352,17 @@ const MentorDashboardPage = () => {
                           <span className="detail-label">Location:</span>
                           <span className="detail-value">{request.location}</span>
                         </div>
+                        {request.payment_method && (
+                          <div className="detail-row">
+                            <span className="detail-label">Payment Method:</span>
+                            <span className="detail-value payment-method">
+                              {request.payment_method === 'other' 
+                                ? request.other_payment_method 
+                                : request.payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+                              }
+                            </span>
+                          </div>
+                        )}
                         {request.notes && (
                           <div className="detail-row">
                             <span className="detail-label">Notes:</span>
@@ -319,13 +392,13 @@ const MentorDashboardPage = () => {
 
                       {request.status === 'accepted' && (
                         <div className="request-status-info">
-                          <p className="status-message">● Request accepted! Session created and awaiting payment.</p>
+                          <p className="status-message">✓ Request accepted! Session created and awaiting payment.</p>
                         </div>
                       )}
 
                       {request.status === 'declined' && (
                         <div className="request-status-info">
-                          <p className="status-message">○ Request declined.</p>
+                          <p className="status-message">✕ Request declined.</p>
                         </div>
                       )}
                     </div>
@@ -335,10 +408,80 @@ const MentorDashboardPage = () => {
             </div>
 
             <div className="sessions-section">
-              <h2>Your Sessions</h2>
-              <div className="sessions-placeholder">
-                <p>Your confirmed sessions will appear here once parents complete payment.</p>
-              </div>
+              <h2>Your Confirmed Sessions</h2>
+              
+              {confirmedSessions.length === 0 ? (
+                <div className="no-sessions">
+                  <div className="no-sessions-icon">📆</div>
+                  <h3>No Confirmed Sessions Yet</h3>
+                  <p>Your confirmed sessions will appear here once parents complete payment for accepted requests.</p>
+                </div>
+              ) : (
+                <div className="sessions-grid">
+                  {confirmedSessions.map(session => (
+                    <div key={session.id} className="session-card">
+                      <div className="session-header">
+                        <div className="parent-info">
+                          <div className="parent-avatar">
+                            {session.parent?.profile_picture_url ? (
+                              <img 
+                                src={session.parent.profile_picture_url} 
+                                alt={`${session.parent.first_name} ${session.parent.last_name}`}
+                                className="parent-avatar-image"
+                              />
+                            ) : (
+                              <span className="avatar-initials">
+                                {session.parent?.first_name?.[0] || 'P'}{session.parent?.last_name?.[0] || 'P'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="parent-details">
+                            <h3>{session.parent?.first_name} {session.parent?.last_name}</h3>
+                            <p className="parent-email">{session.parent?.email}</p>
+                          </div>
+                        </div>
+                        <div className="session-status">
+                          <span className={`status-badge status-${session.status}`}>
+                            {session.status === 'paid' && '✓ Paid'}
+                            {session.status === 'confirmed' && '✓ Confirmed'}
+                            {session.status === 'completed' && '✓ Completed'}
+                          </span>
+                          {session.status === 'confirmed' && (
+                            <button
+                              className="btn btn-complete"
+                              onClick={() => handleMarkCompleted(session.id)}
+                              disabled={actionLoading === session.id}
+                            >
+                              {actionLoading === session.id ? 'Processing...' : 'Mark as Completed'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="session-details">
+                        <div className="detail-row">
+                          <span className="detail-label">Date:</span>
+                          <span className="detail-value">{formatDate(session.scheduled_date)}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Time:</span>
+                          <span className="detail-value">{formatTime(session.scheduled_time)}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Location:</span>
+                          <span className="detail-value">{session.location}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Status:</span>
+                          <span className="detail-value">
+                            {session.status === 'paid' ? 'Payment completed, awaiting confirmation' : 'Session confirmed'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mentor-actions">

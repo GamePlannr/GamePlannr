@@ -18,6 +18,7 @@ const MentorSearchPage = () => {
   
   const [mentors, setMentors] = useState([]);
   const [filteredMentors, setFilteredMentors] = useState([]);
+  const [mentorRatings, setMentorRatings] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -72,9 +73,45 @@ const MentorSearchPage = () => {
     }
   }, [user]);
 
+  const fetchMentorRatings = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ratings')
+        .select(`
+          mentor_id,
+          rating,
+          comment,
+          created_at,
+          parent:parent_id (
+            first_name,
+            last_name
+          )
+        `);
+
+      if (error) {
+        console.error('Error fetching mentor ratings:', error);
+        return;
+      }
+
+      // Group ratings by mentor_id
+      const ratingsByMentor = {};
+      data.forEach(rating => {
+        if (!ratingsByMentor[rating.mentor_id]) {
+          ratingsByMentor[rating.mentor_id] = [];
+        }
+        ratingsByMentor[rating.mentor_id].push(rating);
+      });
+
+      setMentorRatings(ratingsByMentor);
+    } catch (err) {
+      console.error('Error fetching mentor ratings:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMentors();
-  }, [fetchMentors]);
+    fetchMentorRatings();
+  }, [fetchMentors, fetchMentorRatings]);
 
   useEffect(() => {
     // Filter mentors based on search criteria
@@ -99,7 +136,8 @@ const MentorSearchPage = () => {
     
     if (searchFilters.sport) {
       filtered = filtered.filter(mentor => 
-        mentor.sport && mentor.sport.toLowerCase() === searchFilters.sport.toLowerCase()
+        (mentor.sport && mentor.sport.toLowerCase() === searchFilters.sport.toLowerCase()) ||
+        (mentor.additional_sport && mentor.additional_sport.toLowerCase() === searchFilters.sport.toLowerCase())
       );
     }
     
@@ -228,23 +266,85 @@ const MentorSearchPage = () => {
                 {filteredMentors.map(mentor => (
                   <div key={mentor.id} className="mentor-card">
                     <div className="mentor-photo">
-                      <div className="default-avatar">
-                        <span className="avatar-initials">
-                          {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
-                        </span>
-                      </div>
+                      {mentor.profile_picture_url ? (
+                        <img 
+                          src={mentor.profile_picture_url} 
+                          alt={`${mentor.first_name} ${mentor.last_name}`}
+                          className="mentor-avatar-image"
+                        />
+                      ) : (
+                        <div className="default-avatar">
+                          <span className="avatar-initials">
+                            {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="mentor-info">
                       <h3>{mentor.first_name} {mentor.last_name}</h3>
-                      <p className="mentor-sport">{mentor.sport}</p>
+                      <p className="mentor-sport">
+                        {mentor.sport}
+                        {mentor.additional_sport && (
+                          <span className="additional-sport">, {mentor.additional_sport}</span>
+                        )}
+                      </p>
                       <p className="mentor-location">{mentor.city}, {mentor.state}</p>
                       <p className="mentor-experience">{mentor.experience || 'Experienced mentor'}</p>
-                      <div className="mentor-rating">
-                        <span className="stars">★★★★★</span>
-                        <span className="rating-number">4.8</span>
-                      </div>
+                      {(() => {
+                        const ratings = mentorRatings[mentor.id] || [];
+                        const averageRating = ratings.length > 0 
+                          ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
+                          : null;
+                        
+                        return (
+                          <div className="mentor-rating">
+                            {averageRating ? (
+                              <>
+                                <span className="stars">
+                                  {'★'.repeat(Math.round(averageRating))}
+                                  {'☆'.repeat(5 - Math.round(averageRating))}
+                                </span>
+                                <span className="rating-number">{averageRating} ({ratings.length} review{ratings.length !== 1 ? 's' : ''})</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="stars">☆☆☆☆☆</span>
+                                <span className="rating-number">No reviews yet</span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
                       <p className="mentor-bio">{mentor.bio || 'Experienced mentor ready to help young athletes improve their skills.'}</p>
+                      
+                      {/* Show recent reviews */}
+                      {(() => {
+                        const ratings = mentorRatings[mentor.id] || [];
+                        const recentReviews = ratings
+                          .filter(r => r.comment)
+                          .slice(0, 2);
+                        
+                        return recentReviews.length > 0 && (
+                          <div className="mentor-reviews">
+                            <h4>Recent Reviews:</h4>
+                            {recentReviews.map((review, index) => (
+                              <div key={index} className="review-item">
+                                <div className="review-header">
+                                  <span className="reviewer-name">
+                                    {review.parent?.first_name} {review.parent?.last_name}
+                                  </span>
+                                  <span className="review-rating">
+                                    {'★'.repeat(review.rating)}
+                                    {'☆'.repeat(5 - review.rating)}
+                                  </span>
+                                </div>
+                                <p className="review-text">"{review.comment}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                     
                     <div className="mentor-actions">

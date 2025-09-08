@@ -202,6 +202,13 @@
   transition: transform 0.2s ease;
 }
 
+.mentor-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
 .avatar-initials {
   color: white;
   font-size: 3rem;
@@ -210,7 +217,8 @@
   letter-spacing: 2px;
 }
 
-.mentor-card:hover .default-avatar {
+.mentor-card:hover .default-avatar,
+.mentor-card:hover .mentor-avatar-image {
   transform: scale(1.05);
 }
 
@@ -233,6 +241,11 @@
   font-weight: 600;
   color: #007bff;
   margin-bottom: 5px;
+}
+
+.additional-sport {
+  color: #666;
+  font-weight: 400;
 }
 
 .mentor-location {
@@ -263,6 +276,53 @@
   color: #666;
   font-weight: 600;
   font-size: 0.9rem;
+}
+
+.mentor-reviews {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.mentor-reviews h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.review-item {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #007bff;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.reviewer-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.review-rating {
+  font-size: 0.8rem;
+  color: #ffc107;
+}
+
+.review-text {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+  font-style: italic;
 }
 
 .mentor-bio {

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
 import Navbar from '../components/Navbar';
+import RatingModal from '../components/RatingModal';
 import './DashboardPage.css';
 
 const DashboardPage = () => {
@@ -13,6 +14,9 @@ const DashboardPage = () => {
   const [sessionRequests, setSessionRequests] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [ratings, setRatings] = useState([]);
 
   const fetchSessionRequests = useCallback(async () => {
     try {
@@ -50,6 +54,7 @@ const DashboardPage = () => {
         .select(`
           *,
           mentor:mentor_id (
+            id,
             first_name,
             last_name,
             sport
@@ -69,6 +74,39 @@ const DashboardPage = () => {
     }
   }, [user.id]);
 
+  const fetchRatings = useCallback(async () => {
+    if (!user || profile?.role !== 'parent') return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('ratings')
+        .select(`
+          *,
+          session:sessions(*)
+        `)
+        .eq('parent_id', user.id);
+
+      if (error) {
+        console.error('Error fetching ratings:', error);
+        return;
+      }
+
+      setRatings(data || []);
+    } catch (err) {
+      console.error('Error fetching ratings:', err);
+    }
+  }, [user, profile]);
+
+  const handleRateSession = (session) => {
+    setSelectedSession(session);
+    setRatingModalOpen(true);
+  };
+
+  const handleRatingSubmitted = () => {
+    fetchRatings();
+    fetchSessions();
+  };
+
   useEffect(() => {
     // Redirect mentors to mentor dashboard
     if (profile?.role === 'mentor') {
@@ -85,8 +123,9 @@ const DashboardPage = () => {
     if (profile?.role === 'parent') {
       fetchSessionRequests();
       fetchSessions();
+      fetchRatings();
     }
-  }, [profile, navigate, location.state, fetchSessionRequests, fetchSessions]);
+  }, [profile, navigate, location.state, fetchSessionRequests, fetchSessions, fetchRatings]);
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -165,9 +204,9 @@ const DashboardPage = () => {
                           </div>
                           <div className="request-status">
                             <span className={`status-badge status-${request.status}`}>
-                              {request.status === 'pending' && '◐ Pending'}
-                              {request.status === 'accepted' && '● Accepted'}
-                              {request.status === 'declined' && '○ Declined'}
+                              {request.status === 'pending' && '⏳ Pending'}
+                              {request.status === 'accepted' && '✓ Accepted'}
+                              {request.status === 'declined' && '✕ Declined'}
                             </span>
                           </div>
                         </div>
@@ -195,9 +234,10 @@ const DashboardPage = () => {
                           </div>
                           <div className="session-status">
                             <span className={`status-badge status-${session.status}`}>
-                              {session.status === 'awaiting_payment' && '◐ Awaiting Payment'}
-                              {session.status === 'paid' && '● Paid'}
-                              {session.status === 'confirmed' && '● Confirmed'}
+                              {session.status === 'awaiting_payment' && '⏳ Awaiting Payment'}
+                              {session.status === 'paid' && '✓ Paid'}
+                              {session.status === 'confirmed' && '✓ Confirmed'}
+                              {session.status === 'completed' && '✓ Completed'}
                             </span>
                             {session.status === 'awaiting_payment' && (
                               <Link 
@@ -207,6 +247,28 @@ const DashboardPage = () => {
                                 Complete Payment
                               </Link>
                             )}
+                            {session.status === 'completed' && (() => {
+                              const existingRating = ratings.find(r => r.session?.id === session.id);
+                              return existingRating ? (
+                                <div className="rating-submitted">
+                                  <span className="rating-badge">
+                                    ✓ Rated ({existingRating.rating}/5)
+                                  </span>
+                                  {existingRating.comment && (
+                                    <div className="rating-review">
+                                      <p className="review-text">"{existingRating.comment}"</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <button
+                                  className="btn btn-rate"
+                                  onClick={() => handleRateSession(session)}
+                                >
+                                  Rate Session
+                                </button>
+                              );
+                            })()}
                           </div>
                         </div>
                       ))}
@@ -266,6 +328,14 @@ const DashboardPage = () => {
           </div>
         </div>
       </main>
+
+      <RatingModal
+        isOpen={ratingModalOpen}
+        onClose={() => setRatingModalOpen(false)}
+        session={selectedSession}
+        mentor={selectedSession?.mentor}
+        onRatingSubmitted={handleRatingSubmitted}
+      />
     </div>
   );
 };

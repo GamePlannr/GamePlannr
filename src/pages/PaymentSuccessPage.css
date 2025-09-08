@@ -23,8 +23,16 @@
 
 .success-icon {
   font-size: 4rem;
-  color: #28a745;
-  margin-bottom: 20px;
+  color: white;
+  background: #28a745;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  font-weight: bold;
 }
 
 .success-header h1 {
@@ -37,6 +45,13 @@
 .success-header p {
   font-size: 1.1rem;
   color: #666;
+}
+
+.redirect-message {
+  font-size: 1rem;
+  color: #007bff;
+  font-style: italic;
+  margin-top: 10px !important;
 }
 
 .session-confirmation {
@@ -202,7 +217,16 @@
 .error-icon {
   font-size: 4rem;
   margin-bottom: 20px;
-  color: #dc3545;
+  color: white;
+  background: #dc3545;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  font-weight: bold;
 }
 
 .error-container h2 {

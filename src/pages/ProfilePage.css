@@ -29,6 +29,14 @@
   font-size: 1.1rem;
 }
 
+.field-help {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
 .profile-form {
   background: white;
   border-radius: 12px;

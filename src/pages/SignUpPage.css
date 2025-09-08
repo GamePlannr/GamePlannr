@@ -47,6 +47,14 @@
   font-size: 1rem;
 }
 
+.field-help {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
 .signup-form {
   margin-bottom: 30px;
 }

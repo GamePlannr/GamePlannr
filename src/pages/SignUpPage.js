@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ImageUpload from '../components/ImageUpload';
 import './SignUpPage.css';
 
 const SignUpPage = () => {
@@ -10,12 +11,14 @@ const SignUpPage = () => {
     confirmPassword: '',
     firstName: '',
     lastName: '',
-    age: '',
+    age: null,
     city: '',
     state: '',
     sport: '',
+    additionalSport: '',
     role: '',
-    improvementAreas: []
+    improvementAreas: [],
+    profilePictureUrl: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,6 +52,13 @@ const SignUpPage = () => {
     }));
   };
 
+  const handleImageUpload = (imageUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      profilePictureUrl: imageUrl
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -70,8 +80,8 @@ const SignUpPage = () => {
       return;
     }
 
-    if (!formData.firstName || !formData.lastName || !formData.city || !formData.state || !formData.sport) {
-      setError('Please fill in all required fields');
+    if (!formData.firstName || !formData.lastName || !formData.city || !formData.state || !formData.sport || !formData.profilePictureUrl) {
+      setError('Please fill in all required fields including profile picture');
       return;
     }
 
@@ -81,12 +91,14 @@ const SignUpPage = () => {
       const { error } = await signUp(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        age: parseInt(formData.age),
+        age: formData.age,
         city: formData.city,
         state: formData.state,
         sport: formData.sport,
+        additionalSport: formData.additionalSport || null,
         role: formData.role,
-        improvementAreas: formData.improvementAreas
+        improvementAreas: formData.improvementAreas,
+        profilePictureUrl: formData.profilePictureUrl
       });
 
       if (error) {
@@ -94,12 +106,15 @@ const SignUpPage = () => {
         setError(error.message || 'An error occurred during signup');
       } else {
         setSuccess('Account created successfully! Please check your email to verify your account.');
-        // Navigate to sign in with selected mentor info
-        if (selectedMentor) {
-          navigate('/signin', { state: { selectedMentor } });
-        } else {
-          navigate('/signin');
-        }
+        // Small delay to ensure signout completes before navigation
+        setTimeout(() => {
+          // Navigate to sign in with selected mentor info
+          if (selectedMentor) {
+            navigate('/signin', { state: { selectedMentor } });
+          } else {
+            navigate('/signin');
+          }
+        }, 1000);
       }
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -149,6 +164,15 @@ const SignUpPage = () => {
         <form onSubmit={handleSubmit} className="signup-form">
           {error && <div className="error-message">{error}</div>}
           {success && <div className="success-message">{success}</div>}
+
+          <div className="form-group">
+            <label htmlFor="profilePicture">Profile Picture *</label>
+            <ImageUpload
+              userId="signup-temp"
+              onImageUploaded={handleImageUpload}
+              required={true}
+            />
+          </div>
 
           <div className="form-group">
             <label htmlFor="email">Email Address *</label>
@@ -270,6 +294,27 @@ const SignUpPage = () => {
                 <option key={sport} value={sport}>{sport}</option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="additionalSport">Additional Sport (Optional)</label>
+            <select
+              id="additionalSport"
+              name="additionalSport"
+              value={formData.additionalSport}
+              onChange={handleChange}
+            >
+              <option value="">Select an additional sport</option>
+              {sports.map(sport => (
+                <option key={sport} value={sport}>{sport}</option>
+              ))}
+            </select>
+            <small className="field-help">
+              {formData.role === 'mentor' 
+                ? 'Select another sport you can coach if applicable' 
+                : 'Select another sport your child is interested in'
+              }
+            </small>
           </div>
 
           <div className="form-group">

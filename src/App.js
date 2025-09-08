@@ -39,6 +39,17 @@ const PublicRoute = ({ children }) => {
   return user ? <Navigate to="/dashboard" /> : children;
 };
 
+// Public Route component for auth pages (no redirect during signup process)
+const AuthRoute = ({ children }) => {
+  const { loading } = useAuth();
+  
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
+  
+  return children;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -92,17 +103,17 @@ function App() {
             <Route 
               path="/signup" 
               element={
-                <PublicRoute>
+                <AuthRoute>
                   <SignUpPage />
-                </PublicRoute>
+                </AuthRoute>
               } 
             />
             <Route 
               path="/signin" 
               element={
-                <PublicRoute>
+                <AuthRoute>
                   <SignInPage />
-                </PublicRoute>
+                </AuthRoute>
               } 
             />
             

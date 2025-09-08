@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../utils/supabase';
+import ImageUpload from '../components/ImageUpload';
 import Navbar from '../components/Navbar';
 import './ProfilePage.css';
 
@@ -13,9 +15,11 @@ const ProfilePage = () => {
     city: '',
     state: '',
     sport: '',
+    additionalSport: '',
     bio: '',
     phone: '',
-    experience: ''
+    experience: '',
+    profilePictureUrl: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,6 +27,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (profile) {
+      const profilePictureUrl = profile.profile_picture_url || '';
       setFormData({
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
@@ -30,18 +35,84 @@ const ProfilePage = () => {
         city: profile.city || '',
         state: profile.state || '',
         sport: profile.sport || '',
+        additionalSport: profile.additional_sport || '',
         bio: profile.bio || '',
         phone: profile.phone || '',
-        experience: profile.experience || ''
+        experience: profile.experience || '',
+        profilePictureUrl: profilePictureUrl
       });
+
+      // Check if profile picture is still a data URL and upload it
+      if (profilePictureUrl && profilePictureUrl.startsWith('data:')) {
+        handleDataUrlUpload(profilePictureUrl);
+      }
     }
   }, [profile]);
+
+  const handleDataUrlUpload = async (dataUrl) => {
+    try {
+      const { user } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Convert data URL to blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      
+      // Generate unique filename
+      const fileExt = blob.type.split('/')[1] || 'jpg';
+      const fileName = `${user.data.user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+      
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, blob);
+      
+      if (uploadError) {
+        console.error('Error uploading profile picture:', uploadError);
+        return;
+      }
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      
+      // Update profile with new image URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture_url: publicUrl })
+        .eq('id', user.data.user.id);
+      
+      if (updateError) {
+        console.error('Error updating profile picture URL:', updateError);
+        return;
+      }
+      
+      // Update local state
+      setFormData(prev => ({
+        ...prev,
+        profilePictureUrl: publicUrl
+      }));
+      
+      console.log('Profile picture uploaded successfully');
+    } catch (error) {
+      console.error('Error handling data URL upload:', error);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleImageUpload = (imageUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      profilePictureUrl: imageUrl
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -58,9 +129,11 @@ const ProfilePage = () => {
         city: formData.city,
         state: formData.state,
         sport: formData.sport,
+        additional_sport: formData.additionalSport || null,
         bio: formData.bio,
         phone: formData.phone,
         experience: formData.experience,
+        profile_picture_url: formData.profilePictureUrl,
         updated_at: new Date().toISOString()
       };
 
@@ -110,6 +183,15 @@ const ProfilePage = () => {
           <form onSubmit={handleSubmit} className="profile-form">
             {error && <div className="error-message">{error}</div>}
             {success && <div className="success-message">{success}</div>}
+
+            <div className="form-section">
+              <h3>Profile Picture</h3>
+              <ImageUpload
+                userId={profile?.id}
+                currentImageUrl={formData.profilePictureUrl}
+                onImageUploaded={handleImageUpload}
+              />
+            </div>
 
             <div className="form-section">
               <h3>Basic Information</h3>
@@ -210,6 +292,27 @@ const ProfilePage = () => {
                     <option key={sport} value={sport}>{sport}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="additionalSport">Additional Sport (Optional)</label>
+                <select
+                  id="additionalSport"
+                  name="additionalSport"
+                  value={formData.additionalSport}
+                  onChange={handleChange}
+                >
+                  <option value="">Select an additional sport</option>
+                  {sports.map(sport => (
+                    <option key={sport} value={sport}>{sport}</option>
+                  ))}
+                </select>
+                <small className="field-help">
+                  {profile?.role === 'mentor' 
+                    ? 'Select another sport you can coach if applicable' 
+                    : 'Select another sport your child is interested in'
+                  }
+                </small>
               </div>
             </div>
 
