@@ -1,0 +1,27 @@
+.footer {
+  background-color: transparent;
+  color: #999;
+  padding: 40px 0;
+  text-align: center;
+}
+
+.footer p {
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.footer-link {
+  color: #8b5cf6;
+  text-decoration: underline;
+  font-size: 0.9rem;
+}
+
+.footer-link:hover {
+  color: #7c3aed;
+}
+
+@media (max-width: 768px) {
+  .footer {
+    padding: 30px 0;
+  }
+}

@@ -1,0 +1,40 @@
+.star-rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  font-size: 1.2rem;
+  color: #ddd;
+  transition: color 0.2s ease;
+}
+
+.star.filled {
+  color: #ffc107;
+}
+
+.star.clickable {
+  cursor: pointer;
+}
+
+.star.clickable:hover {
+  color: #ffc107;
+}
+
+.star.clickable:hover ~ .star {
+  color: #ddd;
+}
+
+/* Size variants */
+.star-rating.small .star {
+  font-size: 1rem;
+}
+
+.star-rating.medium .star {
+  font-size: 1.2rem;
+}
+
+.star-rating.large .star {
+  font-size: 1.5rem;
+}
