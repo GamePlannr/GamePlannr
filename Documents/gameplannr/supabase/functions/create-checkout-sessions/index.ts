@@ -25,9 +25,9 @@ serve(async (req) => {
 
   try {
     // Get Stripe secret key from environment or use a valid test key
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') || 'sk_test_51S3mRoFUjUaFpWkcEG7XBuSwlJkngTLPki0qDqu59DE6LX8gALJRmDKercFrwnWCksdGZvFMfKGdlHt82u4lsrOy00P5H7KS3Y' // You need to replace this with your actual Stripe test key
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') // You need to replace this with your actual Stripe test key
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'http://127.0.0.1:54321'
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
     const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000'
 
     if (!stripeSecretKey) {

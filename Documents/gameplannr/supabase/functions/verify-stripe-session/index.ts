@@ -23,7 +23,7 @@ serve(async (req) => {
 
   try {
     // Get Stripe secret key from environment
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') || 'sk_test_51S3mRoFUjUaFpWkcEG7XBuSwlJkngTLPki0qDqu59DE6LX8gALJRmDKercFrwnWCksdGZvFMfKGdlHt82u4lsrOy00P5H7KS3Y'
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
 
     if (!stripeSecretKey) {
       throw new Error('Please set a valid Stripe secret key. Get one from https://dashboard.stripe.com/test/apikeys')
