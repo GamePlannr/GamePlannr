@@ -28,16 +28,6 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : <Navigate to="/signin" />;
 };
 
-// Public Route component (redirect to dashboard if already logged in)
-const PublicRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="loading">Loading...</div>;
-  }
-  
-  return user ? <Navigate to="/dashboard" /> : children;
-};
 
 // Public Route component for auth pages (no redirect during signup process)
 const AuthRoute = ({ children }) => {

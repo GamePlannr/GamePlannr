@@ -139,7 +139,7 @@ const PaymentSuccessPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sessionId, user]);
+  }, [sessionId, user, navigate, stripeSessionId]);
 
   useEffect(() => {
     console.log('PaymentSuccessPage useEffect triggered');
@@ -185,7 +185,7 @@ const PaymentSuccessPage = () => {
     }
 
     updateSessionStatus();
-  }, [user, sessionId, navigate, updateSessionStatus]);
+  }, [user, sessionId, navigate, updateSessionStatus, stripeSessionId]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

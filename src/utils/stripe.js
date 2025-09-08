@@ -91,7 +91,6 @@ export const redirectToCheckout = async (sessionId, amount, mentorName, sessionD
 
     // Check if we're in development mode (local Supabase)
     const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-    const isLocalDev = supabaseUrl && supabaseUrl.includes('127.0.0.1');
     
     /*if (isLocalDev) {
       // For local development, use mock payment that simulates Stripe checkout
