@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
-import { formatTime12Hour } from '../utils/timeFormat';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './MentorSearchPage.css';

@@ -47,7 +47,7 @@ const PaymentSuccessPage = () => {
       }
 
       // Try to fetch session details, but don't fail if not found
-      const { data: sessionData, error: sessionError } = await supabase
+      const { data: sessionData } = await supabase
         .from('sessions')
         .select(`
           *,
