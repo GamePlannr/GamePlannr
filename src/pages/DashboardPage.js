@@ -18,6 +18,7 @@ const DashboardPage = () => {
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [ratings, setRatings] = useState([]);
+  const [recentStatusChanges, setRecentStatusChanges] = useState([]);
 
   const fetchSessionRequests = useCallback(async () => {
     try {
@@ -41,6 +42,19 @@ const DashboardPage = () => {
       }
 
       setSessionRequests(data || []);
+      
+      // Check for recent status changes (accepted or declined in last 24 hours)
+      const recentChanges = (data || []).filter(request => {
+        if (request.status === 'accepted' || request.status === 'declined') {
+          const updatedAt = new Date(request.updated_at);
+          const now = new Date();
+          const hoursDiff = (now - updatedAt) / (1000 * 60 * 60);
+          return hoursDiff <= 24; // Show notices for changes in last 24 hours
+        }
+        return false;
+      });
+      
+      setRecentStatusChanges(recentChanges);
     } catch (err) {
       console.error('Unexpected error:', err);
     } finally {
@@ -170,6 +184,37 @@ const DashboardPage = () => {
           <div className="dashboard-content">
             {isParent && (
               <div className="parent-dashboard">
+                {/* Recent Status Change Notices */}
+                {recentStatusChanges.length > 0 && (
+                  <div className="status-notices">
+                    <h3>📢 Recent Updates</h3>
+                    {recentStatusChanges.map(change => (
+                      <div key={change.id} className={`status-notice ${change.status}`}>
+                        {change.status === 'accepted' && (
+                          <div className="notice-content">
+                            <span className="notice-icon">✅</span>
+                            <div className="notice-text">
+                              <strong>Great news!</strong> {change.mentor?.first_name} {change.mentor?.last_name} has accepted your {change.mentor?.sport} session request for {new Date(change.preferred_date).toLocaleDateString()}.
+                              <br />
+                              <small>Check your sessions below to complete payment.</small>
+                            </div>
+                          </div>
+                        )}
+                        {change.status === 'declined' && (
+                          <div className="notice-content">
+                            <span className="notice-icon">❌</span>
+                            <div className="notice-text">
+                              <strong>Update:</strong> {change.mentor?.first_name} {change.mentor?.last_name} is unable to accommodate your {change.mentor?.sport} session request for {new Date(change.preferred_date).toLocaleDateString()}.
+                              <br />
+                              <small>Don't worry! You can find other qualified mentors below.</small>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="dashboard-section">
                   <h2>Find a Mentor</h2>
                   <p>Search for local sports mentors in your area</p>

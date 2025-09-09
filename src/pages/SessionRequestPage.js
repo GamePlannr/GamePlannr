@@ -108,36 +108,7 @@ const SessionRequestPage = () => {
         return;
       }
 
-      // Send email notification to mentor about new session request
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-email', {
-          body: {
-            emailType: 'session_request',
-            recipientEmail: mentor.email,
-            templateData: {
-              mentorName: `${mentor.first_name} ${mentor.last_name}`,
-              parentName: `${profile.first_name} ${profile.last_name}`,
-              sport: mentor.sport,
-              preferredDate: formData.preferredDate,
-              preferredTime: formData.preferredTime,
-              location: formData.location,
-              duration: formData.duration,
-              notes: formData.notes,
-              dashboardURL: 'http://127.0.0.1:3000/mentor-dashboard'
-            }
-          }
-        })
-
-        if (emailError) {
-          console.error('Error sending session request email:', emailError)
-          // Don't fail the request - email is optional
-        } else {
-          console.log('Session request email sent successfully')
-        }
-      } catch (emailError) {
-        console.error('Error sending session request email:', emailError)
-        // Don't fail the request - email is optional
-      }
+      // No email sent when session request is made - only when mentor responds
 
       setSuccess('Session request submitted successfully! The mentor will review your request and get back to you soon.');
       

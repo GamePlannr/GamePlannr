@@ -207,6 +207,26 @@ const MentorDashboardPage = () => {
       setError('');
       setSuccess('');
 
+      // Get the request details before updating
+      const { data: request, error: fetchError } = await supabase
+        .from('session_requests')
+        .select(`
+          *,
+          parent:parent_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('id', requestId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching request details:', fetchError);
+        setError('Failed to fetch request details');
+        return;
+      }
+
       const { error } = await supabase
         .from('session_requests')
         .update({ status: 'declined' })
@@ -216,6 +236,36 @@ const MentorDashboardPage = () => {
         console.error('Error declining request:', error);
         setError(`Failed to decline request: ${error.message}`);
         return;
+      }
+
+      // Send email notification to parent about session decline
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-email', {
+          body: {
+            emailType: 'session_declined',
+            recipientEmail: request.parent.email,
+            templateData: {
+              parentName: `${request.parent.first_name} ${request.parent.last_name}`,
+              mentorName: `${profile.first_name} ${profile.last_name}`,
+              sport: profile.sport,
+              preferredDate: request.preferred_date,
+              preferredTime: request.preferred_time,
+              location: request.location,
+              duration: request.duration_minutes,
+              notes: request.notes
+            }
+          }
+        })
+
+        if (emailError) {
+          console.error('Error sending session decline email:', emailError)
+          // Don't fail the request - email is optional
+        } else {
+          console.log('Session decline email sent successfully')
+        }
+      } catch (emailError) {
+        console.error('Error sending session decline email:', emailError)
+        // Don't fail the request - email is optional
       }
 
       // Show success message
