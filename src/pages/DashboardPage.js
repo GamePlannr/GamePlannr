@@ -19,6 +19,7 @@ const DashboardPage = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [ratings, setRatings] = useState([]);
   const [recentStatusChanges, setRecentStatusChanges] = useState([]);
+  const [dismissedNotices, setDismissedNotices] = useState(new Set());
 
   const fetchSessionRequests = useCallback(async () => {
     try {
@@ -54,13 +55,15 @@ const DashboardPage = () => {
         return false;
       });
       
-      setRecentStatusChanges(recentChanges);
+      // Filter out dismissed notices
+      const visibleChanges = recentChanges.filter(change => !dismissedNotices.has(change.id));
+      setRecentStatusChanges(visibleChanges);
     } catch (err) {
       console.error('Unexpected error:', err);
     } finally {
       setRequestsLoading(false);
     }
-  }, [user.id]);
+  }, [user.id, dismissedNotices]);
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -120,6 +123,12 @@ const DashboardPage = () => {
   const handleRatingSubmitted = () => {
     fetchRatings();
     fetchSessions();
+  };
+
+  const dismissNotice = (noticeId) => {
+    setDismissedNotices(prev => new Set([...prev, noticeId]));
+    // Also update the recentStatusChanges to remove the dismissed notice
+    setRecentStatusChanges(prev => prev.filter(change => change.id !== noticeId));
   };
 
   useEffect(() => {
@@ -190,26 +199,35 @@ const DashboardPage = () => {
                     <h3>📢 Recent Updates</h3>
                     {recentStatusChanges.map(change => (
                       <div key={change.id} className={`status-notice ${change.status}`}>
-                        {change.status === 'accepted' && (
-                          <div className="notice-content">
-                            <span className="notice-icon">✅</span>
-                            <div className="notice-text">
-                              <strong>Great news!</strong> {change.mentor?.first_name} {change.mentor?.last_name} has accepted your {change.mentor?.sport} session request for {new Date(change.preferred_date).toLocaleDateString()}.
-                              <br />
-                              <small>Check your sessions below to complete payment.</small>
-                            </div>
-                          </div>
-                        )}
-                        {change.status === 'declined' && (
-                          <div className="notice-content">
-                            <span className="notice-icon">❌</span>
-                            <div className="notice-text">
-                              <strong>Update:</strong> {change.mentor?.first_name} {change.mentor?.last_name} is unable to accommodate your {change.mentor?.sport} session request for {new Date(change.preferred_date).toLocaleDateString()}.
-                              <br />
-                              <small>Don't worry! You can find other qualified mentors below.</small>
-                            </div>
-                          </div>
-                        )}
+                        <div className="notice-content">
+                          {change.status === 'accepted' && (
+                            <>
+                              <span className="notice-icon">✅</span>
+                              <div className="notice-text">
+                                <strong>Great news!</strong> {change.mentor?.first_name} {change.mentor?.last_name} has accepted your {change.mentor?.sport} session request for {new Date(change.preferred_date).toLocaleDateString()}.
+                                <br />
+                                <small>Check your sessions below to complete payment.</small>
+                              </div>
+                            </>
+                          )}
+                          {change.status === 'declined' && (
+                            <>
+                              <span className="notice-icon">❌</span>
+                              <div className="notice-text">
+                                <strong>Update:</strong> {change.mentor?.first_name} {change.mentor?.last_name} is unable to accommodate your {change.mentor?.sport} session request for {new Date(change.preferred_date).toLocaleDateString()}.
+                                <br />
+                                <small>Don't worry! You can find other qualified mentors below.</small>
+                              </div>
+                            </>
+                          )}
+                          <button 
+                            className="dismiss-btn"
+                            onClick={() => dismissNotice(change.id)}
+                            title="Dismiss this notice"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

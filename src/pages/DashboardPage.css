@@ -433,6 +433,7 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  position: relative;
 }
 
 .notice-icon {
@@ -459,6 +460,36 @@
   margin-top: 4px;
 }
 
+.dismiss-btn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.dismiss-btn:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+.dismiss-btn:active {
+  transform: scale(0.95);
+}
+
 @media (max-width: 768px) {
   .status-notices {
     padding: 15px;
@@ -472,5 +503,11 @@
   
   .notice-icon {
     align-self: flex-start;
+  }
+  
+  .dismiss-btn {
+    position: static;
+    margin-left: auto;
+    margin-top: 8px;
   }
 }
