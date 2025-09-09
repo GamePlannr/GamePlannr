@@ -18,7 +18,9 @@ const SignUpPage = () => {
     additionalSport: '',
     role: '',
     improvementAreas: [],
-    profilePictureUrl: ''
+    teachingAreas: [],
+    profilePictureUrl: '',
+    hourlyRate: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,6 +51,15 @@ const SignUpPage = () => {
       improvementAreas: prev.improvementAreas.includes(area)
         ? prev.improvementAreas.filter(a => a !== area)
         : [...prev.improvementAreas, area]
+    }));
+  };
+
+  const handleTeachingAreaChange = (area) => {
+    setFormData(prev => ({
+      ...prev,
+      teachingAreas: prev.teachingAreas.includes(area)
+        ? prev.teachingAreas.filter(a => a !== area)
+        : [...prev.teachingAreas, area]
     }));
   };
 
@@ -98,14 +109,16 @@ const SignUpPage = () => {
         additionalSport: formData.additionalSport || null,
         role: formData.role,
         improvementAreas: formData.improvementAreas,
-        profilePictureUrl: formData.profilePictureUrl
+        teachingAreas: formData.teachingAreas,
+        profilePictureUrl: formData.profilePictureUrl,
+        hourlyRate: formData.hourlyRate
       });
 
       if (error) {
         console.error('SignUp error details:', error);
         setError(error.message || 'An error occurred during signup');
       } else {
-        setSuccess('Account created successfully! Please check your email to verify your account.');
+        setSuccess('Account created successfully! Please check your email to verify your account before signing in.');
         // Small delay to ensure signout completes before navigation
         setTimeout(() => {
           // Navigate to sign in with selected mentor info
@@ -114,7 +127,7 @@ const SignUpPage = () => {
           } else {
             navigate('/signin');
           }
-        }, 1000);
+        }, 2000);
       }
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -131,6 +144,16 @@ const SignUpPage = () => {
   ];
 
   const improvementAreas = [
+    'Offense',
+    'Defense',
+    'Footwork',
+    'Conditioning / Fitness',
+    'Confidence Building',
+    'Teamwork / Communication',
+    'Game IQ / Strategy'
+  ];
+
+  const teachingAreas = [
     'Offense',
     'Defense',
     'Footwork',
@@ -317,22 +340,65 @@ const SignUpPage = () => {
             </small>
           </div>
 
-          <div className="form-group">
-            <label className="improvement-label">What areas does your athlete want to improve in?</label>
-            <div className="improvement-areas">
-              {improvementAreas.map(area => (
-                <div key={area} className="improvement-option">
-                  <input
-                    type="checkbox"
-                    id={area}
-                    checked={formData.improvementAreas.includes(area)}
-                    onChange={() => handleImprovementAreaChange(area)}
-                  />
-                  <label htmlFor={area}>{area}</label>
-                </div>
-              ))}
+          {formData.role === 'mentor' && (
+            <div className="form-group">
+              <label htmlFor="hourlyRate">Your Hourly Rate ($) (Optional)</label>
+              <input
+                type="number"
+                id="hourlyRate"
+                name="hourlyRate"
+                value={formData.hourlyRate}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                placeholder="e.g., 50.00"
+              />
+              <small className="field-help">
+                This rate will be displayed on your profile. Parents will see this when browsing mentors.
+              </small>
             </div>
-          </div>
+          )}
+
+          {formData.role === 'parent' && (
+            <div className="form-group">
+              <label className="improvement-label">What areas does your athlete want to improve in?</label>
+              <div className="improvement-areas">
+                {improvementAreas.map(area => (
+                  <div key={area} className="improvement-option">
+                    <input
+                      type="checkbox"
+                      id={area}
+                      checked={formData.improvementAreas.includes(area)}
+                      onChange={() => handleImprovementAreaChange(area)}
+                    />
+                    <label htmlFor={area}>{area}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {formData.role === 'mentor' && (
+            <div className="form-group">
+              <label className="improvement-label">What areas do you feel confident teaching? (Select all that apply)</label>
+              <div className="improvement-areas">
+                {teachingAreas.map(area => (
+                  <div key={area} className="improvement-option">
+                    <input
+                      type="checkbox"
+                      id={`teaching-${area}`}
+                      checked={formData.teachingAreas.includes(area)}
+                      onChange={() => handleTeachingAreaChange(area)}
+                    />
+                    <label htmlFor={`teaching-${area}`}>{area}</label>
+                  </div>
+                ))}
+              </div>
+              <small className="field-help">
+                This helps us match you with parents looking for specific areas of improvement.
+              </small>
+            </div>
+          )}
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? 'Creating Account...' : 'Create Account'}

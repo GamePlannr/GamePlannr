@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
+import { formatTime12Hour, formatDuration } from '../utils/timeFormat';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './MentorDashboardPage.css';
@@ -63,7 +64,7 @@ const MentorDashboardPage = () => {
           )
         `)
         .eq('mentor_id', user.id)
-        .in('status', ['paid', 'confirmed'])
+        .in('status', ['paid', 'confirmed', 'completed'])
         .order('scheduled_date', { ascending: true });
 
       if (error) {
@@ -109,6 +110,7 @@ const MentorDashboardPage = () => {
         scheduled_date: request.preferred_date,
         scheduled_time: request.preferred_time,
         location: request.location,
+        duration_minutes: request.duration_minutes,
         status: 'awaiting_payment',
         session_request_id: requestId
       });
@@ -122,6 +124,7 @@ const MentorDashboardPage = () => {
             scheduled_date: request.preferred_date,
             scheduled_time: request.preferred_time,
             location: request.location,
+            duration_minutes: request.duration_minutes,
             status: 'awaiting_payment',
             session_request_id: requestId
           }
@@ -147,6 +150,36 @@ const MentorDashboardPage = () => {
         console.error('Error updating request status:', updateError);
         setError(`Failed to update request status: ${updateError.message}`);
         return;
+      }
+
+      // Send email notification to parent about session acceptance
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-email', {
+          body: {
+            emailType: 'session_accepted',
+            recipientEmail: request.parent.email,
+            templateData: {
+              parentName: `${request.parent.first_name} ${request.parent.last_name}`,
+              mentorName: `${profile.first_name} ${profile.last_name}`,
+              sport: profile.sport,
+              scheduledDate: request.preferred_date,
+              scheduledTime: request.preferred_time,
+              location: request.location,
+              duration: request.duration_minutes,
+              paymentURL: `http://127.0.0.1:3000/payment/${sessionData.id}`
+            }
+          }
+        })
+
+        if (emailError) {
+          console.error('Error sending session acceptance email:', emailError)
+          // Don't fail the request - email is optional
+        } else {
+          console.log('Session acceptance email sent successfully')
+        }
+      } catch (emailError) {
+        console.error('Error sending session acceptance email:', emailError)
+        // Don't fail the request - email is optional
       }
 
       // Show success message
@@ -219,7 +252,7 @@ const MentorDashboardPage = () => {
         throw error;
       }
 
-      setSuccess('✓ Session marked as completed. Parent can now rate the session.');
+      setSuccess('✓ Session marked as completed! The parent can now rate the session and you will receive payment.');
       await fetchConfirmedSessions();
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -240,14 +273,7 @@ const MentorDashboardPage = () => {
   };
 
   const formatTime = (timeString) => {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours), parseInt(minutes));
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+    return formatTime12Hour(timeString);
   };
 
   const getStatusBadge = (status) => {
@@ -352,6 +378,12 @@ const MentorDashboardPage = () => {
                           <span className="detail-label">Location:</span>
                           <span className="detail-value">{request.location}</span>
                         </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Duration:</span>
+                          <span className="detail-value duration-badge">
+                            {formatDuration(request.duration_minutes)}
+                          </span>
+                        </div>
                         {request.payment_method && (
                           <div className="detail-row">
                             <span className="detail-label">Payment Method:</span>
@@ -442,11 +474,11 @@ const MentorDashboardPage = () => {
                         </div>
                         <div className="session-status">
                           <span className={`status-badge status-${session.status}`}>
-                            {session.status === 'paid' && '✓ Paid'}
-                            {session.status === 'confirmed' && '✓ Confirmed'}
-                            {session.status === 'completed' && '✓ Completed'}
+                            {session.status === 'paid' && '💰 Payment Received'}
+                            {session.status === 'confirmed' && '✅ Confirmed'}
+                            {session.status === 'completed' && '🎉 Completed'}
                           </span>
-                          {session.status === 'confirmed' && (
+                          {(session.status === 'paid' || session.status === 'confirmed') && (
                             <button
                               className="btn btn-complete"
                               onClick={() => handleMarkCompleted(session.id)}
@@ -472,11 +504,27 @@ const MentorDashboardPage = () => {
                           <span className="detail-value">{session.location}</span>
                         </div>
                         <div className="detail-row">
-                          <span className="detail-label">Status:</span>
-                          <span className="detail-value">
-                            {session.status === 'paid' ? 'Payment completed, awaiting confirmation' : 'Session confirmed'}
+                          <span className="detail-label">Duration:</span>
+                          <span className="detail-value duration-badge">
+                            {formatDuration(session.duration_minutes)}
                           </span>
                         </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Status:</span>
+                          <span className="detail-value">
+                            {session.status === 'paid' && '✓ Payment completed - Ready to mark as completed'}
+                            {session.status === 'confirmed' && '✓ Session confirmed - Ready to mark as completed'}
+                            {session.status === 'completed' && '✓ Session completed'}
+                          </span>
+                        </div>
+                        {session.stripe_session_id && (
+                          <div className="detail-row">
+                            <span className="detail-label">Payment ID:</span>
+                            <span className="detail-value payment-id">
+                              {session.stripe_session_id.substring(0, 20)}...
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

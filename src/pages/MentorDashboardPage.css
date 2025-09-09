@@ -609,3 +609,44 @@
   border-radius: 4px;
   font-size: 0.9rem;
 }
+
+/* Payment ID styling */
+.payment-id {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #666;
+  background-color: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #e9ecef;
+}
+
+/* Enhanced status badge styling */
+.status-badge.status-paid {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-badge.status-confirmed {
+  background-color: #cce5ff;
+  color: #004085;
+  border: 1px solid #b3d7ff;
+}
+
+.status-badge.status-completed {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+/* Duration badge styling */
+.duration-badge {
+  font-weight: 600;
+  color: #007bff;
+  background-color: #e3f2fd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  border: 1px solid #bbdefb;
+}

@@ -128,6 +128,8 @@ export const AuthProvider = ({ children }) => {
           additional_sport: userData.additionalSport || null,
           role: userData.role,
           profile_picture_url: userData.profilePictureUrl || null,
+          hourly_rate: userData.hourlyRate ? parseFloat(userData.hourlyRate) : null,
+          teaching_areas: userData.teachingAreas || [],
           created_at: new Date().toISOString(),
         }
 
@@ -155,6 +157,32 @@ export const AuthProvider = ({ children }) => {
             console.error('Error uploading profile picture:', uploadError)
             // Don't throw error - profile creation was successful
           }
+        }
+
+        // Send welcome email based on user role
+        try {
+          console.log('Sending welcome email for role:', userData.role)
+          const welcomeEmailData = {
+            userType: userData.role,
+            recipientEmail: data.user.email,
+            recipientName: `${userData.firstName} ${userData.lastName}`,
+            dashboardURL: 'http://127.0.0.1:3000/dashboard',
+            mentorsURL: 'http://127.0.0.1:3000/mentors'
+          }
+
+          const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
+            body: welcomeEmailData
+          })
+
+          if (emailError) {
+            console.error('Error sending welcome email:', emailError)
+            // Don't throw error - account creation was successful
+          } else {
+            console.log('Welcome email sent successfully')
+          }
+        } catch (emailError) {
+          console.error('Error sending welcome email:', emailError)
+          // Don't throw error - account creation was successful
         }
         
         // Force sign out after successful signup to clear the access token

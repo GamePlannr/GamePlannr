@@ -210,6 +210,17 @@
   font-weight: 500;
 }
 
+.payment-clarification {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 15px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+  line-height: 1.4;
+}
+
 .loading-container,
 .error-container {
   display: flex;

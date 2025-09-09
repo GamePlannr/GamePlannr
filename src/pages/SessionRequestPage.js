@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
+import { formatTime12Hour, formatDuration } from '../utils/timeFormat';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './SessionRequestPage.css';
@@ -16,6 +17,7 @@ const SessionRequestPage = () => {
     preferredDate: '',
     preferredTime: '',
     location: '',
+    duration: 60, // Default to 1 hour
     notes: '',
     paymentMethod: '',
     otherPaymentMethod: ''
@@ -91,6 +93,7 @@ const SessionRequestPage = () => {
             preferred_date: formData.preferredDate,
             preferred_time: formData.preferredTime,
             location: formData.location,
+            duration_minutes: formData.duration,
             notes: formData.notes || null,
             payment_method: formData.paymentMethod,
             other_payment_method: formData.paymentMethod === 'other' ? formData.otherPaymentMethod : null,
@@ -104,6 +107,37 @@ const SessionRequestPage = () => {
         console.error('Error creating session request:', error);
         setError('Failed to submit request. Please try again.');
         return;
+      }
+
+      // Send email notification to mentor about new session request
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-email', {
+          body: {
+            emailType: 'session_request',
+            recipientEmail: mentor.email,
+            templateData: {
+              mentorName: `${mentor.first_name} ${mentor.last_name}`,
+              parentName: `${profile.first_name} ${profile.last_name}`,
+              sport: mentor.sport,
+              preferredDate: formData.preferredDate,
+              preferredTime: formData.preferredTime,
+              location: formData.location,
+              duration: formData.duration,
+              notes: formData.notes,
+              dashboardURL: 'http://127.0.0.1:3000/mentor-dashboard'
+            }
+          }
+        })
+
+        if (emailError) {
+          console.error('Error sending session request email:', emailError)
+          // Don't fail the request - email is optional
+        } else {
+          console.log('Session request email sent successfully')
+        }
+      } catch (emailError) {
+        console.error('Error sending session request email:', emailError)
+        // Don't fail the request - email is optional
       }
 
       setSuccess('Session request submitted successfully! The mentor will review your request and get back to you soon.');
@@ -217,6 +251,22 @@ const SessionRequestPage = () => {
                     placeholder="e.g., Local park, Sports facility, Your home"
                     required
                   />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="duration">Session Duration *</label>
+                  <select
+                    id="duration"
+                    name="duration"
+                    value={formData.duration}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value={30}>30 minutes</option>
+                    <option value={60}>1 hour</option>
+                    <option value={90}>1.5 hours</option>
+                    <option value={120}>2 hours</option>
+                  </select>
                 </div>
 
                 <div className="form-group">

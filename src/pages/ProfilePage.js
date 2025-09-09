@@ -19,7 +19,9 @@ const ProfilePage = () => {
     bio: '',
     phone: '',
     experience: '',
-    profilePictureUrl: ''
+    profilePictureUrl: '',
+    hourlyRate: '',
+    teachingAreas: []
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,7 +41,9 @@ const ProfilePage = () => {
         bio: profile.bio || '',
         phone: profile.phone || '',
         experience: profile.experience || '',
-        profilePictureUrl: profilePictureUrl
+        profilePictureUrl: profilePictureUrl,
+        hourlyRate: profile.hourly_rate || '',
+        teachingAreas: profile.teaching_areas || []
       });
 
       // Check if profile picture is still a data URL and upload it
@@ -115,6 +119,15 @@ const ProfilePage = () => {
     }));
   };
 
+  const handleTeachingAreaChange = (area) => {
+    setFormData(prev => ({
+      ...prev,
+      teachingAreas: prev.teachingAreas.includes(area)
+        ? prev.teachingAreas.filter(a => a !== area)
+        : [...prev.teachingAreas, area]
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -163,6 +176,16 @@ const ProfilePage = () => {
     'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK',
     'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV',
     'WI', 'WY'
+  ];
+
+  const teachingAreas = [
+    'Offense',
+    'Defense',
+    'Footwork',
+    'Conditioning / Fitness',
+    'Confidence Building',
+    'Teamwork / Communication',
+    'Game IQ / Strategy'
   ];
 
   if (!profile) {
@@ -319,6 +342,41 @@ const ProfilePage = () => {
             {profile.role === 'mentor' && (
               <div className="form-section">
                 <h3>Mentor Information</h3>
+                <div className="form-group">
+                  <label htmlFor="hourlyRate">Your Hourly Rate ($) (Optional)</label>
+                  <input
+                    type="number"
+                    id="hourlyRate"
+                    name="hourlyRate"
+                    value={formData.hourlyRate}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g., 50.00"
+                  />
+                  <small className="field-help">
+                    This rate will be displayed on your profile. Parents will see this when browsing mentors.
+                  </small>
+                </div>
+                <div className="form-group">
+                  <label className="improvement-label">What areas do you feel confident teaching? (Select all that apply)</label>
+                  <div className="improvement-areas">
+                    {teachingAreas.map(area => (
+                      <div key={area} className="improvement-option">
+                        <input
+                          type="checkbox"
+                          id={`teaching-${area}`}
+                          checked={formData.teachingAreas.includes(area)}
+                          onChange={() => handleTeachingAreaChange(area)}
+                        />
+                        <label htmlFor={`teaching-${area}`}>{area}</label>
+                      </div>
+                    ))}
+                  </div>
+                  <small className="field-help">
+                    This helps us match you with parents looking for specific areas of improvement.
+                  </small>
+                </div>
                 <div className="form-group">
                   <label htmlFor="experience">Experience & Background</label>
                   <textarea

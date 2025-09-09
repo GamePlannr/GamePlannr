@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
 import { redirectToCheckout } from '../utils/stripe';
+import { formatTime12Hour, formatDuration } from '../utils/timeFormat';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './PaymentPage.css';
@@ -115,14 +116,7 @@ const PaymentPage = () => {
   };
 
   const formatTime = (timeString) => {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours), parseInt(minutes));
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+    return formatTime12Hour(timeString);
   };
 
   if (loading) {
@@ -227,13 +221,16 @@ const PaymentPage = () => {
               <div className="price-breakdown">
                 <h4>Price Breakdown</h4>
                 <div className="price-item">
-                  <span>Booking Session Fee</span>
+                  <span>GamePlannr Booking Fee – Mentor Matching</span>
                   <span>$4.00</span>
                 </div>
                 <div className="price-item total">
                   <span>Total</span>
                   <span>$4.00</span>
                 </div>
+                <p className="payment-clarification">
+                  <strong>Note:</strong> This $4 fee reserves your session. Mentors are paid separately.
+                </p>
               </div>
 
               <div className="payment-actions">

@@ -260,6 +260,51 @@
   margin-bottom: 12px;
 }
 
+.mentor-rate {
+  color: #007bff;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 5px 0;
+  background-color: #e3f2fd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.mentor-teaching-areas {
+  margin: 8px 0;
+}
+
+.teaching-areas-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.teaching-areas-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.teaching-area-tag {
+  background-color: #f0f8ff;
+  color: #007bff;
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  border-radius: 12px;
+  border: 1px solid #e3f2fd;
+  font-weight: 500;
+}
+
+.teaching-area-tag.more {
+  background-color: #f5f5f5;
+  color: #666;
+  border-color: #ddd;
+}
+
 .mentor-rating {
   display: flex;
   align-items: center;

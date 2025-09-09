@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
+import { formatTime12Hour } from '../utils/timeFormat';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './MentorSearchPage.css';
@@ -291,6 +292,22 @@ const MentorSearchPage = () => {
                       </p>
                       <p className="mentor-location">{mentor.city}, {mentor.state}</p>
                       <p className="mentor-experience">{mentor.experience || 'Experienced mentor'}</p>
+                      {mentor.hourly_rate && (
+                        <p className="mentor-rate">${mentor.hourly_rate}/hour</p>
+                      )}
+                      {mentor.teaching_areas && mentor.teaching_areas.length > 0 && (
+                        <div className="mentor-teaching-areas">
+                          <span className="teaching-areas-label">Specializes in:</span>
+                          <div className="teaching-areas-tags">
+                            {mentor.teaching_areas.slice(0, 3).map((area, index) => (
+                              <span key={index} className="teaching-area-tag">{area}</span>
+                            ))}
+                            {mentor.teaching_areas.length > 3 && (
+                              <span className="teaching-area-tag more">+{mentor.teaching_areas.length - 3} more</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {(() => {
                         const ratings = mentorRatings[mentor.id] || [];
                         const averageRating = ratings.length > 0 
