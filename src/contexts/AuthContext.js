@@ -309,19 +309,29 @@ export const AuthProvider = ({ children }) => {
     try {
       if (!user) throw new Error('No user logged in')
 
+      console.log('AuthContext: Updating profile for user:', user.id);
+      console.log('AuthContext: Update data:', updates);
+
       const { error } = await supabase
         .from('profiles')
         .update(updates)
         .eq('id', user.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('AuthContext: Profile update error:', error);
+        throw error;
+      }
+
+      console.log('AuthContext: Profile updated successfully');
 
       // Refresh profile data
       const updatedProfile = await getUserProfile(user.id)
+      console.log('AuthContext: Refreshed profile data:', updatedProfile);
       setProfile(updatedProfile)
 
       return { error: null }
     } catch (error) {
+      console.error('AuthContext: updateProfile error:', error);
       return { error }
     }
   }

@@ -147,8 +147,14 @@ const ProfilePage = () => {
         phone: formData.phone,
         experience: formData.experience,
         profile_picture_url: formData.profilePictureUrl,
+        hourly_rate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : null,
+        teaching_areas: formData.teachingAreas,
         updated_at: new Date().toISOString()
       };
+
+      console.log('ProfilePage: Updating profile with data:', updates);
+      console.log('ProfilePage: hourly_rate value:', formData.hourlyRate);
+      console.log('ProfilePage: teaching_areas value:', formData.teachingAreas);
 
       const { error } = await updateProfile(updates);
 
