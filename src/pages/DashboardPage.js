@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
+import { formatTime12Hour } from '../utils/timeFormat';
 import Navbar from '../components/Navbar';
 import RatingModal from '../components/RatingModal';
 import './DashboardPage.css';
@@ -199,7 +200,7 @@ const DashboardPage = () => {
                         <div key={request.id} className="request-item">
                           <div className="request-info">
                             <h4>{request.mentor?.first_name} {request.mentor?.last_name} - {request.mentor?.sport}</h4>
-                            <p className="request-date">{new Date(request.preferred_date).toLocaleDateString()} at {request.preferred_time}</p>
+                            <p className="request-date">{new Date(request.preferred_date).toLocaleDateString()} at {formatTime12Hour(request.preferred_time)}</p>
                             <p className="request-location">{request.location}</p>
                           </div>
                           <div className="request-status">
@@ -229,7 +230,7 @@ const DashboardPage = () => {
                         <div key={session.id} className="session-item">
                           <div className="session-info">
                             <h4>{session.mentor?.first_name} {session.mentor?.last_name} - {session.mentor?.sport}</h4>
-                            <p className="session-date">{new Date(session.scheduled_date).toLocaleDateString()} at {session.scheduled_time}</p>
+                            <p className="session-date">{new Date(session.scheduled_date).toLocaleDateString()} at {formatTime12Hour(session.scheduled_time)}</p>
                             <p className="session-location">{session.location}</p>
                           </div>
                           <div className="session-status">

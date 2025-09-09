@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supabase';
+import { formatTime12Hour } from '../utils/timeFormat';
 import StarRating from './StarRating';
 import './RatingModal.css';
 
@@ -84,7 +85,7 @@ const RatingModal = ({ isOpen, onClose, session, mentor, onRatingSubmitted }) =>
         <div className="rating-modal-content">
           <div className="mentor-info">
             <h3>Session with {mentor?.first_name} {mentor?.last_name}</h3>
-            <p>{new Date(session?.scheduled_date).toLocaleDateString()} at {session?.scheduled_time}</p>
+            <p>{new Date(session?.scheduled_date).toLocaleDateString()} at {formatTime12Hour(session?.scheduled_time)}</p>
           </div>
 
           <form onSubmit={handleSubmit}>

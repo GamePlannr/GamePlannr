@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
@@ -26,6 +26,8 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -118,6 +120,43 @@ const ProfilePage = () => {
       profilePictureUrl: imageUrl
     }));
   };
+
+  const fetchReviews = useCallback(async () => {
+    if (!profile || profile.role !== 'mentor') return;
+    
+    setReviewsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ratings')
+        .select(`
+          id,
+          rating,
+          comment,
+          created_at,
+          parent:parent_id (
+            first_name,
+            last_name
+          )
+        `)
+        .eq('mentor_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching reviews:', error);
+        return;
+      }
+
+      setReviews(data || []);
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   const handleTeachingAreaChange = (area) => {
     setFormData(prev => ({
@@ -421,6 +460,46 @@ const ProfilePage = () => {
               </Link>
             </div>
           </form>
+
+          {/* Reviews Section for Mentors */}
+          {profile?.role === 'mentor' && (
+            <div className="reviews-section">
+              <h2>Your Reviews</h2>
+              <p>See what parents are saying about your sessions</p>
+              
+              {reviewsLoading ? (
+                <div className="loading">Loading reviews...</div>
+              ) : reviews.length > 0 ? (
+                <div className="reviews-list">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="review-item">
+                      <div className="review-header">
+                        <div className="reviewer-info">
+                          <span className="reviewer-name">
+                            {review.parent?.first_name} {review.parent?.last_name}
+                          </span>
+                          <span className="review-date">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="review-rating">
+                          {'★'.repeat(review.rating)}
+                          {'☆'.repeat(5 - review.rating)}
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="review-comment">"{review.comment}"</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-reviews">
+                  <p>No reviews yet. Keep delivering great sessions to earn your first review!</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>
