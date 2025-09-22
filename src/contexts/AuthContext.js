@@ -38,9 +38,21 @@ export const AuthProvider = ({ children }) => {
         return { error: signUpError };
       }
 
-      const userId = signUpData.user.id;
+      // ✅ Wait for session to be available (ensures RLS policies will work)
+      let session = null;
+      for (let i = 0; i < 10; i++) {
+        const { data } = await supabase.auth.getSession();
+        session = data?.session;
+        if (session) break;
+        await new Promise((res) => setTimeout(res, 300)); // wait 300ms
+      }
 
-      // Safely parse hourly rate if provided
+      if (!session) {
+        return { error: { message: 'Session not available after signup' } };
+      }
+
+      const userId = session.user.id;
+
       const hourlyRateNumber =
         typeof userData.hourlyRate === 'string' && userData.hourlyRate.trim() !== ''
           ? parseFloat(userData.hourlyRate)
