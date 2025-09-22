@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, createContext } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../utils/supabase'; // ✅ Corrected path
 
 const AuthContext = createContext();
 
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, userData) => {
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -80,7 +80,9 @@ export const AuthProvider = ({ children }) => {
         hourly_rate: hourlyRateNumber,
       };
 
-      const { error: insertError } = await supabase.from('profiles').insert(profileToInsert);
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert(profileToInsert);
 
       if (insertError) {
         return { error: insertError };
