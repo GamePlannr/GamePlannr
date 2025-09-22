@@ -11,13 +11,16 @@ export const AuthProvider = ({ children }) => {
 
   // Subscribe to auth changes
   useEffect(() => {
-    const session = supabase.auth.getSession().then(({ data: { session } }) => {
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
       setLoading(false);
-    });
+    };
+
+    fetchSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setUser(session?.user || null);
       }
     );
@@ -34,25 +37,24 @@ export const AuthProvider = ({ children }) => {
         password,
       });
 
-      if (signUpError) {
-        return { error: signUpError };
-      }
+      if (signUpError) return { error: signUpError };
 
-      // ✅ Wait for session to be available (ensures RLS policies will work)
+      // ✅ Wait for session to be ready after sign-up
       let session = null;
       for (let i = 0; i < 10; i++) {
         const { data } = await supabase.auth.getSession();
         session = data?.session;
-        if (session) break;
-        await new Promise((res) => setTimeout(res, 300)); // wait 300ms
+        if (session?.user?.id) break;
+        await new Promise((r) => setTimeout(r, 200)); // wait 200ms
       }
 
-      if (!session) {
-        return { error: { message: 'Session not available after signup' } };
+      if (!session?.user?.id) {
+        return { error: new Error('Session not established after signup') };
       }
 
       const userId = session.user.id;
 
+      // Parse hourly rate
       const hourlyRateNumber =
         typeof userData.hourlyRate === 'string' && userData.hourlyRate.trim() !== ''
           ? parseFloat(userData.hourlyRate)
