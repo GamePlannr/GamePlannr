@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Replace these with your actual Supabase project URL and anon key
-// You'll get these from your Supabase project settings
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'http://127.0.0.1:54321'
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
+// === Supabase Configuration ===
+// Ensure Supabase URL always starts with https://
+const supabaseUrl = (process.env.REACT_APP_SUPABASE_URL?.startsWith('http')
+  ? process.env.REACT_APP_SUPABASE_URL
+  : `https://${process.env.REACT_APP_SUPABASE_URL}`) || 'http://127.0.0.1:54321'
+
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'your-local-anon-key'
 
 // Debug logging
 console.log('Supabase URL:', supabaseUrl)
@@ -14,13 +17,14 @@ let supabase = null
 try {
   if (supabaseUrl && supabaseAnonKey) {
     supabase = createClient(supabaseUrl, supabaseAnonKey)
-    console.log('Supabase client created successfully')
+    console.log('✅ Supabase client created successfully')
   } else {
-    throw new Error('Invalid Supabase configuration')
+    throw new Error('❌ Invalid Supabase configuration')
   }
 } catch (error) {
   console.error('Error creating Supabase client:', error)
-  // Fallback to mock client
+
+  // Fallback to mock client so app doesn't crash
   supabase = {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
@@ -46,7 +50,8 @@ try {
 
 export { supabase }
 
-// Helper function to get current user
+// === Helpers ===
+
 export const getCurrentUser = async () => {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error) {
@@ -56,18 +61,17 @@ export const getCurrentUser = async () => {
   return user
 }
 
-// Helper function to get user profile
 export const getUserProfile = async (userId) => {
   console.log('getUserProfile called with userId:', userId)
-  
+
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
     .single()
-  
+
   console.log('getUserProfile result:', { data, error })
-  
+
   if (error) {
     console.error('Error getting user profile:', error)
     return null
