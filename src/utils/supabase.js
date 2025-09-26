@@ -1,30 +1,38 @@
 import { createClient } from '@supabase/supabase-js'
 
 // === Supabase Configuration ===
-// Ensure Supabase URL always starts with https://
-const supabaseUrl = (process.env.REACT_APP_SUPABASE_URL?.startsWith('http')
-  ? process.env.REACT_APP_SUPABASE_URL
-  : `https://${process.env.REACT_APP_SUPABASE_URL}`) || 'http://127.0.0.1:54321'
+// Replace with your actual Supabase project URL and anon key (for hardcoded fallback)
+const fallbackUrl = 'https://fvmzvkikwesvppfzfmjh.supabase.co'
+const fallbackAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2bXp2a2lrd2VzdnBwZnpmbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NjU2ODMsImV4cCI6MjA3MjE0MTY4M30.mrJ6N_I10nYsbWotgvIQr6z4BFDnoxnqOhBLYlyjAyQ'
 
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'your-local-anon-key'
+// Use environment variable if available, fallback to known working values
+const supabaseUrl = (
+  process.env.REACT_APP_SUPABASE_URL?.startsWith('http')
+    ? process.env.REACT_APP_SUPABASE_URL
+    : process.env.REACT_APP_SUPABASE_URL
+      ? `https://${process.env.REACT_APP_SUPABASE_URL}`
+      : fallbackUrl
+)
 
-// Debug logging
-console.log('Supabase URL:', supabaseUrl)
-console.log('Supabase Anon Key (first 20 chars):', supabaseAnonKey.substring(0, 20) + '...')
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || fallbackAnonKey
 
-// Create Supabase client with error handling
+// === Debug logging ===
+console.log('🔧 Supabase URL:', supabaseUrl)
+console.log('🔧 Supabase Anon Key (first 20 chars):', supabaseAnonKey.substring(0, 20) + '...')
+
+// === Create Supabase client with error handling ===
 let supabase = null
 try {
   if (supabaseUrl && supabaseAnonKey) {
     supabase = createClient(supabaseUrl, supabaseAnonKey)
     console.log('✅ Supabase client created successfully')
   } else {
-    throw new Error('❌ Invalid Supabase configuration')
+    throw new Error('❌ Missing Supabase URL or anon key')
   }
 } catch (error) {
-  console.error('Error creating Supabase client:', error)
+  console.error('❌ Error creating Supabase client:', error)
 
-  // Fallback to mock client so app doesn't crash
+  // Fallback mock client to avoid app crash
   supabase = {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
@@ -55,14 +63,14 @@ export { supabase }
 export const getCurrentUser = async () => {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error) {
-    console.error('Error getting current user:', error)
+    console.error('❌ Error getting current user:', error)
     return null
   }
   return user
 }
 
 export const getUserProfile = async (userId) => {
-  console.log('getUserProfile called with userId:', userId)
+  console.log('📥 getUserProfile called with userId:', userId)
 
   const { data, error } = await supabase
     .from('profiles')
@@ -70,10 +78,10 @@ export const getUserProfile = async (userId) => {
     .eq('id', userId)
     .single()
 
-  console.log('getUserProfile result:', { data, error })
+  console.log('📤 getUserProfile result:', { data, error })
 
   if (error) {
-    console.error('Error getting user profile:', error)
+    console.error('❌ Error getting user profile:', error)
     return null
   }
   return data
