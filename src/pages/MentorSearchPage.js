@@ -256,7 +256,7 @@ const MentorSearchPage = () => {
                 {filteredMentors.map(mentor => (
                   <div key={mentor.id} className="mentor-card">
                     <div className="mentor-photo">
-                      {mentor.profile_picture_url ? (
+                      {mentor.profile_picture_url && mentor.profile_picture_url.startsWith('http') ? (
                         <img 
                           src={`${mentor.profile_picture_url}?t=${new Date().getTime()}`} 
                           alt={`${mentor.first_name} ${mentor.last_name}`}
@@ -265,7 +265,7 @@ const MentorSearchPage = () => {
                       ) : (
                         <div className="default-avatar">
                           <span className="avatar-initials">
-                            {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
+                            {`${mentor.first_name?.[0] || ''}${mentor.last_name?.[0] || ''}`.toUpperCase() || 'MM'}
                           </span>
                         </div>
                       )}
