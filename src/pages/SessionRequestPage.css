@@ -42,18 +42,18 @@
 
 .mentor-summary {
   background: white;
-  /* color: white; */
   padding: 30px;
   display: flex;
   align-items: center;
   gap: 20px;
 }
 
+/* ✅ Updated image styles */
 .mentor-avatar {
   width: 80px;
   height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+  background: #f0f0f0;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,7 +64,7 @@
 .mentor-avatar-image {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 12px;
   object-fit: cover;
 }
 
@@ -257,39 +257,39 @@
   .request-main {
     padding: 80px 0 30px 0;
   }
-  
+
   .request-header h1 {
     font-size: 2rem;
   }
-  
+
   .mentor-summary {
     flex-direction: column;
     text-align: center;
     gap: 15px;
   }
-  
+
   .mentor-avatar {
     width: 60px;
     height: 60px;
   }
-  
+
   .avatar-initials {
     font-size: 1.5rem;
   }
-  
+
   .request-form {
     padding: 30px 20px;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
     gap: 15px;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
+
   .btn {
     width: 100%;
   }
@@ -299,11 +299,11 @@
   .request-container {
     padding: 0 10px;
   }
-  
+
   .request-header h1 {
     font-size: 1.8rem;
   }
-  
+
   .request-form {
     padding: 20px 15px;
   }
