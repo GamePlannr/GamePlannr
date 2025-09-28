@@ -9,13 +9,13 @@ import './MentorSearchPage.css';
 const MentorSearchPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [searchFilters, setSearchFilters] = useState({
     city: '',
     state: '',
     sport: ''
   });
-  
+
   const [mentors, setMentors] = useState([]);
   const [filteredMentors, setFilteredMentors] = useState([]);
   const [mentorRatings, setMentorRatings] = useState({});
@@ -40,8 +40,7 @@ const MentorSearchPage = () => {
     try {
       setLoading(true);
       setError('');
-      
-      // Fetch only mentors (role = 'mentor') from the profiles table
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -54,15 +53,11 @@ const MentorSearchPage = () => {
         return;
       }
 
-      console.log('Fetched mentors from Supabase:', data);
-      
-      // Filter out the current user's profile if they are a mentor
       let mentorsData = data || [];
       if (user) {
         mentorsData = mentorsData.filter(mentor => mentor.id !== user.id);
-        console.log('Filtered out current user, remaining mentors:', mentorsData);
       }
-      
+
       setMentors(mentorsData);
       setFilteredMentors(mentorsData);
     } catch (err) {
@@ -93,7 +88,6 @@ const MentorSearchPage = () => {
         return;
       }
 
-      // Group ratings by mentor_id
       const ratingsByMentor = {};
       data.forEach(rating => {
         if (!ratingsByMentor[rating.mentor_id]) {
@@ -114,33 +108,31 @@ const MentorSearchPage = () => {
   }, [fetchMentors, fetchMentorRatings]);
 
   useEffect(() => {
-    // Filter mentors based on search criteria
     let filtered = mentors;
-    
-    // Always exclude the current user if they are logged in
+
     if (user) {
       filtered = filtered.filter(mentor => mentor.id !== user.id);
     }
-    
+
     if (searchFilters.city) {
-      filtered = filtered.filter(mentor => 
+      filtered = filtered.filter(mentor =>
         mentor.city && mentor.city.toLowerCase().includes(searchFilters.city.toLowerCase())
       );
     }
-    
+
     if (searchFilters.state) {
-      filtered = filtered.filter(mentor => 
+      filtered = filtered.filter(mentor =>
         mentor.state && mentor.state === searchFilters.state
       );
     }
-    
+
     if (searchFilters.sport) {
-      filtered = filtered.filter(mentor => 
+      filtered = filtered.filter(mentor =>
         (mentor.sport && mentor.sport.toLowerCase() === searchFilters.sport.toLowerCase()) ||
         (mentor.additional_sport && mentor.additional_sport.toLowerCase() === searchFilters.sport.toLowerCase())
       );
     }
-    
+
     setFilteredMentors(filtered);
   }, [searchFilters, mentors, user]);
 
@@ -153,10 +145,8 @@ const MentorSearchPage = () => {
 
   const handleRequestSession = (mentorId) => {
     if (user) {
-      // User is logged in, redirect to session request page
       navigate(`/request-session/${mentorId}`);
     } else {
-      // User not logged in, redirect to sign up with mentor info
       navigate('/signup', { state: { selectedMentor: mentorId } });
     }
   };
@@ -172,7 +162,7 @@ const MentorSearchPage = () => {
   return (
     <div className="mentor-search-page">
       <Navbar />
-      
+
       <main className="search-main">
         <div className="search-container">
           <div className="search-header">
@@ -268,7 +258,7 @@ const MentorSearchPage = () => {
                     <div className="mentor-photo">
                       {mentor.profile_picture_url ? (
                         <img 
-                          src={mentor.profile_picture_url} 
+                          src={`${mentor.profile_picture_url}?t=${new Date().getTime()}`} 
                           alt={`${mentor.first_name} ${mentor.last_name}`}
                           className="mentor-avatar-image"
                         />
@@ -280,7 +270,7 @@ const MentorSearchPage = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="mentor-info">
                       <h3>{mentor.first_name} {mentor.last_name}</h3>
                       <p className="mentor-sport">
@@ -312,7 +302,7 @@ const MentorSearchPage = () => {
                         const averageRating = ratings.length > 0 
                           ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
                           : null;
-                        
+
                         return (
                           <div className="mentor-rating">
                             {averageRating ? (
@@ -333,14 +323,10 @@ const MentorSearchPage = () => {
                         );
                       })()}
                       <p className="mentor-bio">{mentor.bio || 'Experienced mentor ready to help young athletes improve their skills.'}</p>
-                      
-                      {/* Show recent reviews */}
+
                       {(() => {
                         const ratings = mentorRatings[mentor.id] || [];
-                        const recentReviews = ratings
-                          .filter(r => r.comment)
-                          .slice(0, 2);
-                        
+                        const recentReviews = ratings.filter(r => r.comment).slice(0, 2);
                         return recentReviews.length > 0 && (
                           <div className="mentor-reviews">
                             <h4>Recent Reviews:</h4>
@@ -362,7 +348,7 @@ const MentorSearchPage = () => {
                         );
                       })()}
                     </div>
-                    
+
                     <div className="mentor-actions">
                       <button 
                         className="request-session-btn"
