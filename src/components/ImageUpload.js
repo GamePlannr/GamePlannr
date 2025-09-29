@@ -1,14 +1,8 @@
-// ImageUpload.js (restored and working)
 import React, { useState, useEffect } from 'react';
-import supabase from '../AuthContext'; // ← Uses exported client from AuthContext.js
+import { supabase } from '../utils/supabase';
 import './ImageUpload.css';
 
-const ImageUpload = ({
-  userId,
-  currentImageUrl,
-  onImageUploaded,
-  required = false
-}) => {
+const ImageUpload = ({ userId, currentImageUrl, onImageUploaded, required = false }) => {
   const [preview, setPreview] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -23,15 +17,13 @@ const ImageUpload = ({
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validate image type
     if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file');
+      setError('Please select an image file');
       return;
     }
 
-    // Limit to 5MB
     if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be less than 5MB');
+      setError('File size must be less than 5MB');
       return;
     }
 
@@ -39,11 +31,10 @@ const ImageUpload = ({
     setUploading(true);
 
     try {
-      // 🔒 Signup flow (unauthenticated) — use base64 preview
       if (userId === 'signup-temp') {
         const reader = new FileReader();
-        reader.onloadend = () => {
-          const dataUrl = reader.result;
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
           setPreview(dataUrl);
           onImageUploaded(dataUrl);
         };
@@ -52,9 +43,11 @@ const ImageUpload = ({
         return;
       }
 
-      // ✅ Authenticated users — upload to Supabase Storage
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be logged in to upload images');
+
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -70,8 +63,8 @@ const ImageUpload = ({
       setPreview(publicUrl);
       onImageUploaded(publicUrl);
     } catch (err) {
-      console.error('Image upload failed:', err.message);
-      setError(err.message || 'Upload failed');
+      console.error('Error uploading image:', err);
+      setError(err.message || 'Failed to upload image');
     } finally {
       setUploading(false);
     }
