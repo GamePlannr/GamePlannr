@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import './ImageUpload.css';
@@ -96,7 +95,7 @@ const ImageUpload = ({
           </div>
         )}
       </div>
-
+      
       <input
         type="file"
         accept="image/*"
@@ -105,11 +104,11 @@ const ImageUpload = ({
         className="file-input"
         id="image-upload"
       />
-
+      
       <label htmlFor="image-upload" className="upload-button">
         {uploading ? 'Uploading...' : 'Choose Image'}
       </label>
-
+      
       {error && <div className="error-message">{error}</div>}
     </div>
   );
