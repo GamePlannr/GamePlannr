@@ -1,487 +1,400 @@
-.mentor-search-page {
-min-height: 100vh;
-background-color: #f8f9fa;
-display: flex;
-flex-direction: column;
-}
-
-.search-main {
-flex: 1;
-padding: 100px 0 40px 0;
-}
-
-.search-container {
-max-width: 1200px;
-margin: 0 auto;
-padding: 0 20px;
-}
-
-.search-header {
-text-align: center;
-margin-bottom: 50px;
-}
-
-.search-header h1 {
-font-size: 3rem;
-font-weight: 700;
-color: #1a1a1a;
-margin-bottom: 15px;
-}
-
-.search-header p {
-font-size: 1.25rem;
-color: #666;
-max-width: 600px;
-margin: 0 auto;
-}
-
-.search-filters {
-background: white;
-border-radius: 12px;
-padding: 30px;
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-margin-bottom: 40px;
-display: grid;
-grid-template-columns: 1fr 1fr 1fr auto;
-gap: 20px;
-align-items: end;
-}
-
-.filter-group {
-display: flex;
-flex-direction: column;
-}
-
-.filter-group label {
-font-weight: 600;
-color: #333;
-margin-bottom: 8px;
-font-size: 0.9rem;
-}
-
-.filter-group input,
-.filter-group select {
-padding: 12px 16px;
-border: 2px solid #e1e5e9;
-border-radius: 8px;
-font-size: 1rem;
-transition: border-color 0.2s ease;
-background: white;
-}
-
-.filter-group input:focus,
-.filter-group select:focus {
-outline: none;
-border-color: #007bff;
-}
-
-.clear-filters-btn {
-background: #6c757d;
-color: white;
-border: none;
-padding: 12px 24px;
-border-radius: 8px;
-font-weight: 600;
-cursor: pointer;
-transition: background-color 0.2s ease;
-white-space: nowrap;
-}
-
-.clear-filters-btn:hover {
-background: #5a6268;
-}
-
-.results-section {
-margin-bottom: 40px;
-}
-
-.results-header h2 {
-font-size: 1.8rem;
-color: #333;
-margin-bottom: 10px;
-}
-
-.mentor-note {
-color: #666;
-font-size: 0.9rem;
-font-style: italic;
-margin: 0 0 30px 0;
-}
-
-.error-message {
-background: #f8d7da;
-border: 1px solid #f5c6cb;
-border-radius: 8px;
-padding: 20px;
-margin-bottom: 30px;
-text-align: center;
-}
-
-.error-message p {
-color: #721c24;
-margin: 0 0 15px 0;
-font-weight: 500;
-}
-
-.retry-btn {
-background: #dc3545;
-color: white;
-border: none;
-padding: 10px 20px;
-border-radius: 6px;
-font-weight: 600;
-cursor: pointer;
-transition: background-color 0.2s ease;
-}
-
-.retry-btn:hover {
-background: #c82333;
-}
-
-.loading-mentors {
-text-align: center;
-padding: 60px 20px;
-}
-
-.loading-spinner {
-width: 40px;
-height: 40px;
-border: 4px solid #f3f3f3;
-border-top: 4px solid #007bff;
-border-radius: 50%;
-animation: spin 1s linear infinite;
-margin: 0 auto 20px;
-}
-
-@keyframes spin {
-0% { transform: rotate(0deg); }
-100% { transform: rotate(360deg); }
-}
-
-.loading-mentors p {
-color: #666;
-font-size: 1.1rem;
-}
-
-.mentors-grid {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-gap: 30px;
-}
-
-.mentor-card {
-background: white;
-border-radius: 12px;
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-overflow: hidden;
-transition: transform 0.2s ease, box-shadow 0.2s ease;
-display: flex;
-flex-direction: column;
-height: 100%;
-}
-
-.mentor-card:hover {
-transform: translateY(-4px);
-box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-/* ✅ Updated photo styles /
-.mentor-photo {
-width: 100%;
-height: 200px;
-overflow: hidden;
-border-radius: 12px;       / matches card rounding /
-display: flex;
-align-items: center;
-justify-content: center;
-background-color: #f0f0f0; / optional gray background */
-}
-
-.default-avatar {
-width: 100%;
-height: 100%;
-background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-display: flex;
-align-items: center;
-justify-content: center;
-transition: transform 0.2s ease;
-}
-
-.mentor-avatar-image {
-width: 100%;
-height: 100%;
-object-fit: cover;         /* fills container nicely /
-border-radius: 12px;       / soft rounded corners */
-display: block;
-transition: transform 0.2s ease;
-}
-
-.avatar-initials {
-color: white;
-font-size: 3rem;
-font-weight: 700;
-text-transform: uppercase;
-letter-spacing: 2px;
-}
-
-.mentor-card:hover .default-avatar,
-.mentor-card:hover .mentor-avatar-image {
-transform: scale(1.05);
-}
-
-.mentor-info {
-padding: 25px;
-flex: 1;
-display: flex;
-flex-direction: column;
-}
-
-.mentor-info h3 {
-font-size: 1.4rem;
-font-weight: 700;
-color: #1a1a1a;
-margin-bottom: 8px;
-}
-
-.mentor-sport {
-font-size: 1.1rem;
-font-weight: 600;
-color: #007bff;
-margin-bottom: 5px;
-}
-
-.additional-sport {
-color: #666;
-font-weight: 400;
-}
-
-.mentor-location {
-color: #666;
-font-size: 0.95rem;
-margin-bottom: 8px;
-}
-
-.mentor-experience {
-color: #888;
-font-size: 0.9rem;
-margin-bottom: 12px;
-}
-
-.mentor-rate {
-color: #007bff;
-font-size: 1rem;
-font-weight: 600;
-margin: 5px 0;
-background-color: #e3f2fd;
-padding: 4px 8px;
-border-radius: 4px;
-display: inline-block;
-}
-
-.mentor-teaching-areas {
-margin: 8px 0;
-}
-
-.teaching-areas-label {
-font-size: 0.9rem;
-font-weight: 600;
-color: #666;
-display: block;
-margin-bottom: 4px;
-}
-
-.teaching-areas-tags {
-display: flex;
-flex-wrap: wrap;
-gap: 4px;
-}
-
-.teaching-area-tag {
-background-color: #f0f8ff;
-color: #007bff;
-font-size: 0.8rem;
-padding: 2px 6px;
-border-radius: 12px;
-border: 1px solid #e3f2fd;
-font-weight: 500;
-}
-
-.teaching-area-tag.more {
-background-color: #f5f5f5;
-color: #666;
-border-color: #ddd;
-}
-
-.mentor-rating {
-display: flex;
-align-items: center;
-gap: 8px;
-margin-bottom: 15px;
-}
-
-.stars {
-color: #ffc107;
-font-size: 1rem;
-}
-
-.rating-number {
-color: #666;
-font-weight: 600;
-font-size: 0.9rem;
-}
-
-.mentor-reviews {
-margin-top: 15px;
-padding-top: 15px;
-border-top: 1px solid #eee;
-}
-
-.mentor-reviews h4 {
-font-size: 0.9rem;
-font-weight: 600;
-color: #333;
-margin: 0 0 10px 0;
-}
-
-.review-item {
-margin-bottom: 12px;
-padding: 8px;
-background: #f8f9fa;
-border-radius: 6px;
-border-left: 3px solid #007bff;
-}
-
-.review-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 6px;
-}
-
-.reviewer-name {
-font-size: 0.8rem;
-font-weight: 600;
-color: #495057;
-}
-
-.review-rating {
-font-size: 0.8rem;
-color: #ffc107;
-}
-
-.review-text {
-font-size: 0.8rem;
-color: #666;
-margin: 0;
-line-height: 1.4;
-font-style: italic;
-}
-
-.mentor-bio {
-color: #555;
-line-height: 1.5;
-font-size: 0.95rem;
-margin-bottom: 20px;
-display: -webkit-box;
--webkit-line-clamp: 3;
--webkit-box-orient: vertical;
-overflow: hidden;
-flex: 1;
-}
-
-.mentor-actions {
-padding: 0 25px 25px;
-margin-top: auto;
-}
-
-.request-session-btn {
-width: 100%;
-background: #007bff;
-color: white;
-border: none;
-padding: 12px 24px;
-border-radius: 8px;
-font-weight: 600;
-font-size: 1rem;
-cursor: pointer;
-transition: background-color 0.2s ease;
-}
-
-.request-session-btn:hover {
-background: #0056b3;
-}
-
-.no-results {
-text-align: center;
-padding: 60px 20px;
-background: white;
-border-radius: 12px;
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.no-results h3 {
-font-size: 1.5rem;
-color: #333;
-margin-bottom: 10px;
-}
-
-.no-results p {
-color: #666;
-margin-bottom: 20px;
-}
-
-@media (max-width: 768px) {
-.search-main {
-padding: 80px 0 30px 0;
-}
-
-.search-header h1 {
-font-size: 2.2rem;
-}
-
-.search-header p {
-font-size: 1.1rem;
-}
-
-.search-filters {
-grid-template-columns: 1fr;
-gap: 15px;
-padding: 20px;
-}
-
-.mentors-grid {
-grid-template-columns: 1fr;
-gap: 20px;
-}
-
-.mentor-card {
-margin: 0 10px;
-}
-
-.mentor-info {
-padding: 20px;
-}
-
-.mentor-actions {
-padding: 0 20px 20px;
-}
-
-.avatar-initials {
-font-size: 2.5rem;
-}
-}
-
-@media (max-width: 480px) {
-.search-container {
-padding: 0 10px;
-}
-
-.search-header h1 {
-font-size: 1.8rem;
-}
-
-.mentor-card {
-margin: 0;
-}
-}
-
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../utils/supabase';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import './MentorSearchPage.css';
+
+const MentorSearchPage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const [searchFilters, setSearchFilters] = useState({
+    city: '',
+    state: '',
+    sport: ''
+  });
+  
+  const [mentors, setMentors] = useState([]);
+  const [filteredMentors, setFilteredMentors] = useState([]);
+  const [mentorRatings, setMentorRatings] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const sports = [
+    'Basketball', 'Football', 'Soccer', 'Baseball', 'Tennis', 'Swimming',
+    'Track & Field', 'Volleyball', 'Golf', 'Hockey', 'Lacrosse', 'Wrestling',
+    'Gymnastics', 'Martial Arts', 'Other'
+  ];
+
+  const states = [
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID',
+    'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS',
+    'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK',
+    'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV',
+    'WI', 'WY'
+  ];
+
+  const fetchMentors = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Fetch only mentors (role = 'mentor') from the profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'mentor')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching mentors:', error);
+        setError('Failed to load mentors. Please try again.');
+        return;
+      }
+
+      console.log('Fetched mentors from Supabase:', data);
+      
+      // Filter out the current user's profile if they are a mentor
+      let mentorsData = data || [];
+      if (user) {
+        mentorsData = mentorsData.filter(mentor => mentor.id !== user.id);
+        console.log('Filtered out current user, remaining mentors:', mentorsData);
+      }
+      
+      setMentors(mentorsData);
+      setFilteredMentors(mentorsData);
+    } catch (err) {
+      console.error('Unexpected error fetching mentors:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchMentorRatings = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ratings')
+        .select(`
+          mentor_id,
+          rating,
+          comment,
+          created_at,
+          parent:parent_id (
+            first_name,
+            last_name
+          )
+        `);
+
+      if (error) {
+        console.error('Error fetching mentor ratings:', error);
+        return;
+      }
+
+      // Group ratings by mentor_id
+      const ratingsByMentor = {};
+      data.forEach(rating => {
+        if (!ratingsByMentor[rating.mentor_id]) {
+          ratingsByMentor[rating.mentor_id] = [];
+        }
+        ratingsByMentor[rating.mentor_id].push(rating);
+      });
+
+      setMentorRatings(ratingsByMentor);
+    } catch (err) {
+      console.error('Error fetching mentor ratings:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMentors();
+    fetchMentorRatings();
+  }, [fetchMentors, fetchMentorRatings]);
+
+  useEffect(() => {
+    // Filter mentors based on search criteria
+    let filtered = mentors;
+    
+    // Always exclude the current user if they are logged in
+    if (user) {
+      filtered = filtered.filter(mentor => mentor.id !== user.id);
+    }
+    
+    if (searchFilters.city) {
+      filtered = filtered.filter(mentor => 
+        mentor.city && mentor.city.toLowerCase().includes(searchFilters.city.toLowerCase())
+      );
+    }
+    
+    if (searchFilters.state) {
+      filtered = filtered.filter(mentor => 
+        mentor.state && mentor.state === searchFilters.state
+      );
+    }
+    
+    if (searchFilters.sport) {
+      filtered = filtered.filter(mentor => 
+        (mentor.sport && mentor.sport.toLowerCase() === searchFilters.sport.toLowerCase()) ||
+        (mentor.additional_sport && mentor.additional_sport.toLowerCase() === searchFilters.sport.toLowerCase())
+      );
+    }
+    
+    setFilteredMentors(filtered);
+  }, [searchFilters, mentors, user]);
+
+  const handleFilterChange = (e) => {
+    setSearchFilters({
+      ...searchFilters,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleRequestSession = (mentorId) => {
+    if (user) {
+      // User is logged in, redirect to session request page
+      navigate(`/request-session/${mentorId}`);
+    } else {
+      // User not logged in, redirect to sign up with mentor info
+      navigate('/signup', { state: { selectedMentor: mentorId } });
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchFilters({
+      city: '',
+      state: '',
+      sport: ''
+    });
+  };
+
+  return (
+    <div className="mentor-search-page">
+      <Navbar />
+      
+      <main className="search-main">
+        <div className="search-container">
+          <div className="search-header">
+            <h1>Find Your Perfect Mentor</h1>
+            <p>Connect with experienced athletes who can help your child excel</p>
+          </div>
+
+          <div className="search-filters">
+            <div className="filter-group">
+              <label htmlFor="city">City</label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                placeholder="Enter city name"
+                value={searchFilters.city}
+                onChange={handleFilterChange}
+              />
+            </div>
+
+            <div className="filter-group">
+              <label htmlFor="state">State</label>
+              <select
+                id="state"
+                name="state"
+                value={searchFilters.state}
+                onChange={handleFilterChange}
+              >
+                <option value="">All States</option>
+                {states.map(state => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label htmlFor="sport">Sport</label>
+              <select
+                id="sport"
+                name="sport"
+                value={searchFilters.sport}
+                onChange={handleFilterChange}
+              >
+                <option value="">All Sports</option>
+                {sports.map(sport => (
+                  <option key={sport} value={sport}>{sport}</option>
+                ))}
+              </select>
+            </div>
+
+            <button 
+              type="button" 
+              className="clear-filters-btn"
+              onClick={clearFilters}
+            >
+              Clear Filters
+            </button>
+          </div>
+
+          <div className="results-section">
+            <div className="results-header">
+              <h2>
+                {loading ? 'Loading mentors...' : `${filteredMentors.length} mentors found`}
+              </h2>
+              {user && (
+                <p className="mentor-note">
+                  Note: Your own profile is not shown in search results.
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <div className="error-message">
+                <p>{error}</p>
+                <button 
+                  className="retry-btn"
+                  onClick={fetchMentors}
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="loading-mentors">
+                <div className="loading-spinner"></div>
+                <p>Finding the best mentors for you...</p>
+              </div>
+            ) : (
+              <div className="mentors-grid">
+                {filteredMentors.map(mentor => (
+                  <div key={mentor.id} className="mentor-card">
+                    <div className="mentor-photo">
+                      {mentor.profile_picture_url ? (
+                        <img 
+                          src={mentor.profile_picture_url} 
+                          alt={`${mentor.first_name} ${mentor.last_name}`}
+                          className="mentor-avatar-image"
+                        />
+                      ) : (
+                        <div className="default-avatar">
+                          <span className="avatar-initials">
+                            {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mentor-info">
+                      <h3>{mentor.first_name} {mentor.last_name}</h3>
+                      <p className="mentor-sport">
+                        {mentor.sport}
+                        {mentor.additional_sport && (
+                          <span className="additional-sport">, {mentor.additional_sport}</span>
+                        )}
+                      </p>
+                      <p className="mentor-location">{mentor.city}, {mentor.state}</p>
+                      <p className="mentor-experience">{mentor.experience || 'Experienced mentor'}</p>
+                      {mentor.hourly_rate && (
+                        <p className="mentor-rate">${mentor.hourly_rate}/hour</p>
+                      )}
+                      {mentor.teaching_areas && mentor.teaching_areas.length > 0 && (
+                        <div className="mentor-teaching-areas">
+                          <span className="teaching-areas-label">Specializes in:</span>
+                          <div className="teaching-areas-tags">
+                            {mentor.teaching_areas.slice(0, 3).map((area, index) => (
+                              <span key={index} className="teaching-area-tag">{area}</span>
+                            ))}
+                            {mentor.teaching_areas.length > 3 && (
+                              <span className="teaching-area-tag more">+{mentor.teaching_areas.length - 3} more</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {(() => {
+                        const ratings = mentorRatings[mentor.id] || [];
+                        const averageRating = ratings.length > 0 
+                          ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
+                          : null;
+                        
+                        return (
+                          <div className="mentor-rating">
+                            {averageRating ? (
+                              <>
+                                <span className="stars">
+                                  {'★'.repeat(Math.round(averageRating))}
+                                  {'☆'.repeat(5 - Math.round(averageRating))}
+                                </span>
+                                <span className="rating-number">{averageRating} ({ratings.length} review{ratings.length !== 1 ? 's' : ''})</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="stars">☆☆☆☆☆</span>
+                                <span className="rating-number">No reviews yet</span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <p className="mentor-bio">{mentor.bio || 'Experienced mentor ready to help young athletes improve their skills.'}</p>
+                      
+                      {/* Show recent reviews */}
+                      {(() => {
+                        const ratings = mentorRatings[mentor.id] || [];
+                        const recentReviews = ratings
+                          .filter(r => r.comment)
+                          .slice(0, 2);
+                        
+                        return recentReviews.length > 0 && (
+                          <div className="mentor-reviews">
+                            <h4>Recent Reviews:</h4>
+                            {recentReviews.map((review, index) => (
+                              <div key={index} className="review-item">
+                                <div className="review-header">
+                                  <span className="reviewer-name">
+                                    {review.parent?.first_name} {review.parent?.last_name}
+                                  </span>
+                                  <span className="review-rating">
+                                    {'★'.repeat(review.rating)}
+                                    {'☆'.repeat(5 - review.rating)}
+                                  </span>
+                                </div>
+                                <p className="review-text">"{review.comment}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    
+                    <div className="mentor-actions">
+                      <button 
+                        className="request-session-btn"
+                        onClick={() => handleRequestSession(mentor.id)}
+                      >
+                        Request Session
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!loading && filteredMentors.length === 0 && (
+              <div className="no-results">
+                <h3>No mentors found</h3>
+                <p>Try adjusting your search filters to find more mentors.</p>
+                <button 
+                  className="clear-filters-btn"
+                  onClick={clearFilters}
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default MentorSearchPage;
