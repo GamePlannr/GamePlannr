@@ -41,6 +41,7 @@ const MentorSearchPage = () => {
       setLoading(true);
       setError('');
 
+      // Fetch only mentors (role = 'mentor') from the profiles table
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -53,9 +54,13 @@ const MentorSearchPage = () => {
         return;
       }
 
+      console.log('Fetched mentors from Supabase:', data);
+
+      // Filter out the current user's profile if they are a mentor
       let mentorsData = data || [];
       if (user) {
         mentorsData = mentorsData.filter(mentor => mentor.id !== user.id);
+        console.log('Filtered out current user, remaining mentors:', mentorsData);
       }
 
       setMentors(mentorsData);
@@ -88,6 +93,7 @@ const MentorSearchPage = () => {
         return;
       }
 
+      // Group ratings by mentor_id
       const ratingsByMentor = {};
       data.forEach(rating => {
         if (!ratingsByMentor[rating.mentor_id]) {
@@ -108,26 +114,28 @@ const MentorSearchPage = () => {
   }, [fetchMentors, fetchMentorRatings]);
 
   useEffect(() => {
+    // Filter mentors based on search criteria
     let filtered = mentors;
 
+    // Always exclude the current user if they are logged in
     if (user) {
       filtered = filtered.filter(mentor => mentor.id !== user.id);
     }
 
     if (searchFilters.city) {
-      filtered = filtered.filter(mentor =>
+      filtered = filtered.filter(mentor => 
         mentor.city && mentor.city.toLowerCase().includes(searchFilters.city.toLowerCase())
       );
     }
 
     if (searchFilters.state) {
-      filtered = filtered.filter(mentor =>
+      filtered = filtered.filter(mentor => 
         mentor.state && mentor.state === searchFilters.state
       );
     }
 
     if (searchFilters.sport) {
-      filtered = filtered.filter(mentor =>
+      filtered = filtered.filter(mentor => 
         (mentor.sport && mentor.sport.toLowerCase() === searchFilters.sport.toLowerCase()) ||
         (mentor.additional_sport && mentor.additional_sport.toLowerCase() === searchFilters.sport.toLowerCase())
       );
@@ -145,8 +153,10 @@ const MentorSearchPage = () => {
 
   const handleRequestSession = (mentorId) => {
     if (user) {
+      // User is logged in, redirect to session request page
       navigate(`/request-session/${mentorId}`);
     } else {
+      // User not logged in, redirect to sign up with mentor info
       navigate('/signup', { state: { selectedMentor: mentorId } });
     }
   };
@@ -256,16 +266,16 @@ const MentorSearchPage = () => {
                 {filteredMentors.map(mentor => (
                   <div key={mentor.id} className="mentor-card">
                     <div className="mentor-photo">
-                      {mentor.profile_picture_url && mentor.profile_picture_url.startsWith('http') ? (
+                      {mentor.profile_picture_url ? (
                         <img 
-                          src={`${mentor.profile_picture_url}?t=${new Date().getTime()}`} 
+                          src={mentor.profile_picture_url} 
                           alt={`${mentor.first_name} ${mentor.last_name}`}
                           className="mentor-avatar-image"
                         />
                       ) : (
                         <div className="default-avatar">
                           <span className="avatar-initials">
-                            {`${mentor.first_name?.[0] || ''}${mentor.last_name?.[0] || ''}`.toUpperCase() || 'MM'}
+                            {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
                           </span>
                         </div>
                       )}
@@ -324,9 +334,13 @@ const MentorSearchPage = () => {
                       })()}
                       <p className="mentor-bio">{mentor.bio || 'Experienced mentor ready to help young athletes improve their skills.'}</p>
 
+                      {/* Show recent reviews */}
                       {(() => {
                         const ratings = mentorRatings[mentor.id] || [];
-                        const recentReviews = ratings.filter(r => r.comment).slice(0, 2);
+                        const recentReviews = ratings
+                          .filter(r => r.comment)
+                          .slice(0, 2);
+
                         return recentReviews.length > 0 && (
                           <div className="mentor-reviews">
                             <h4>Recent Reviews:</h4>
