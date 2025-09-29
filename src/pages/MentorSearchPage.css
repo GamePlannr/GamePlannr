@@ -185,16 +185,11 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* ✅ Updated photo styles */
 .mentor-photo {
   width: 100%;
   height: 200px;
   overflow: hidden;
-  border-radius: 12px;       /* matches card rounding */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f0f0f0; /* optional gray background */
+  position: relative;
 }
 
 .default-avatar {
@@ -210,9 +205,7 @@
 .mentor-avatar-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;         /* fills container nicely */
-  border-radius: 12px;       /* soft rounded corners */
-  display: block;
+  object-fit: cover;
   transition: transform 0.2s ease;
 }
 
@@ -434,38 +427,38 @@
   .search-main {
     padding: 80px 0 30px 0;
   }
-
+  
   .search-header h1 {
     font-size: 2.2rem;
   }
-
+  
   .search-header p {
     font-size: 1.1rem;
   }
-
+  
   .search-filters {
     grid-template-columns: 1fr;
     gap: 15px;
     padding: 20px;
   }
-
+  
   .mentors-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-
+  
   .mentor-card {
     margin: 0 10px;
   }
-
+  
   .mentor-info {
     padding: 20px;
   }
-
+  
   .mentor-actions {
     padding: 0 20px 20px;
   }
-
+  
   .avatar-initials {
     font-size: 2.5rem;
   }
@@ -475,11 +468,11 @@
   .search-container {
     padding: 0 10px;
   }
-
+  
   .search-header h1 {
     font-size: 1.8rem;
   }
-
+  
   .mentor-card {
     margin: 0;
   }
