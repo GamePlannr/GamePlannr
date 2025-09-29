@@ -1,12 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import './ImageUpload.css';
 
-const ImageUpload = ({
-  userId,
-  currentImageUrl,
-  onImageUploaded,
-  required = false
+const ImageUpload = ({ 
+  userId, 
+  currentImageUrl, 
+  onImageUploaded, 
+  required = false 
 }) => {
   const [preview, setPreview] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -22,11 +23,13 @@ const ImageUpload = ({
     const file = event.target.files[0];
     if (!file) return;
 
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file');
       return;
     }
 
+    // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       setError('File size must be less than 5MB');
       return;
@@ -36,20 +39,36 @@ const ImageUpload = ({
     setUploading(true);
 
     try {
-      // If no real user ID yet (signup flow), generate a temporary one
-      const safeUserId = userId === 'signup-temp'
-        ? `temp-${Date.now()}`
-        : userId;
+      // For signup flow, store as data URL temporarily
+      if (userId === 'signup-temp') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          setPreview(dataUrl);
+          onImageUploaded(dataUrl);
+        };
+        reader.readAsDataURL(file);
+        setUploading(false);
+        return;
+      }
+
+      // For authenticated users, upload to Supabase Storage
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('You must be logged in to upload images');
+      }
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${safeUserId}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
@@ -58,8 +77,8 @@ const ImageUpload = ({
       setPreview(publicUrl);
       onImageUploaded(publicUrl);
     } catch (err) {
-      console.error('Image upload error:', err);
-      setError(err.message || 'Upload failed');
+      console.error('Error uploading image:', err);
+      setError(err.message || 'Failed to upload image');
     } finally {
       setUploading(false);
     }
