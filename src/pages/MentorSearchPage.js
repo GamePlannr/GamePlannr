@@ -41,6 +41,7 @@ const MentorSearchPage = () => {
       setLoading(true);
       setError('');
 
+      // Fetch only mentors (role = 'mentor') from the profiles table
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -55,8 +56,11 @@ const MentorSearchPage = () => {
 
       console.log('Fetched mentors from Supabase:', data);
 
-      setMentors(data || []);
-      setFilteredMentors(data || []);
+      // ✅ No longer filter out current user
+      let mentorsData = data || [];
+
+      setMentors(mentorsData);
+      setFilteredMentors(mentorsData);
     } catch (err) {
       console.error('Unexpected error fetching mentors:', err);
       setError('An unexpected error occurred. Please try again.');
@@ -85,6 +89,7 @@ const MentorSearchPage = () => {
         return;
       }
 
+      // Group ratings by mentor_id
       const ratingsByMentor = {};
       data.forEach(rating => {
         if (!ratingsByMentor[rating.mentor_id]) {
@@ -105,6 +110,7 @@ const MentorSearchPage = () => {
   }, [fetchMentors, fetchMentorRatings]);
 
   useEffect(() => {
+    // Filter mentors based on search criteria
     let filtered = mentors;
 
     if (searchFilters.city) {
@@ -137,14 +143,11 @@ const MentorSearchPage = () => {
   };
 
   const handleRequestSession = (mentorId) => {
-    if (user && mentorId === user.id) {
-      alert("You can’t request a session with yourself.");
-      return;
-    }
-
     if (user) {
+      // User is logged in, redirect to session request page
       navigate(`/request-session/${mentorId}`);
     } else {
+      // User not logged in, redirect to sign up with mentor info
       navigate('/signup', { state: { selectedMentor: mentorId } });
     }
   };
@@ -359,10 +362,11 @@ const MentorSearchPage = () => {
               </div>
             )}
 
+            {/* ✅ Updated "no mentors" message */}
             {!loading && filteredMentors.length === 0 && (
               <div className="no-results">
-                <h3>No mentors found</h3>
-                <p>Try adjusting your search filters to find more mentors.</p>
+                <h3>No mentors in your area yet</h3>
+                <p>We’re growing every day—check back soon or adjust your search filters.</p>
                 <button 
                   className="clear-filters-btn"
                   onClick={clearFilters}
