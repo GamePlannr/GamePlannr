@@ -16,33 +16,127 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // -----------------
+  // SIGN UP
+  // -----------------
+  const signUp = async (email, password, userData) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+      if (error) throw error
+
+      if (data.user) {
+        const profileToInsert = {
+          id: data.user.id,
+          email: data.user.email,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          age: userData.age,
+          city: userData.city,
+          state: userData.state,
+          sport: userData.sport,
+          additional_sport: userData.additionalSport || null,
+          role: userData.role,
+          profile_picture_url: userData.profilePictureUrl || null,
+          hourly_rate: userData.hourlyRate ? parseFloat(userData.hourlyRate) : null,
+          teaching_areas: userData.teachingAreas || [],
+          created_at: new Date().toISOString(),
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        await supabase.from('profiles').insert([profileToInsert])
+
+        // sign user out after signup so they must log back in
+        await supabase.auth.signOut()
+      }
+
+      return { data, error: null }
+    } catch (error) {
+      console.error('SignUp error:', error)
+      return { data: null, error }
+    }
+  }
+
+  // -----------------
+  // SIGN IN
+  // -----------------
+  const signIn = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      if (data.user) {
+        const userProfile = await getUserProfile(data.user.id)
+        setProfile(userProfile)
+      }
+
+      return { data, error: null }
+    } catch (error) {
+      return { data: null, error }
+    }
+  }
+
+  // -----------------
+  // SIGN OUT
+  // -----------------
+  const signOut = async () => {
+    try {
+      setUser(null)
+      setProfile(null)
+      await supabase.auth.signOut()
+      return { error: null }
+    } catch (error) {
+      console.error('SignOut error:', error)
+      setUser(null)
+      setProfile(null)
+      return { error }
+    }
+  }
+
+  // -----------------
+  // UPDATE PROFILE
+  // -----------------
+  const updateProfile = async (updates) => {
+    try {
+      if (!user) throw new Error('No user logged in')
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      const updatedProfile = await getUserProfile(user.id)
+      setProfile(updatedProfile)
+      return { error: null }
+    } catch (error) {
+      console.error('updateProfile error:', error)
+      return { error }
+    }
+  }
+
+  // -----------------
+  // INITIAL SESSION + LISTENERS
+  // -----------------
   useEffect(() => {
-    // Get initial session
     const getInitialSession = async () => {
-      console.log('Getting initial session...')
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
-        console.log('Initial session:', session)
-        console.log('Session error:', error)
-
         if (error) {
-          console.error('Error getting session:', error)
           setUser(null)
           setProfile(null)
         } else if (session?.user) {
           setUser(session.user)
-          console.log('Loading profile for user:', session.user.id)
           const userProfile = await getUserProfile(session.user.id)
-
-          if (!userProfile) {
-            console.warn("No profile found for user:", session.user.id)
-            setProfile({ role: "unknown", first_name: "User" }) // fallback
-          } else {
-            console.log('User profile loaded:', userProfile)
-            setProfile(userProfile)
-          }
+          setProfile(userProfile)
         } else {
-          console.log('No session found, user not logged in')
           setUser(null)
           setProfile(null)
         }
@@ -56,39 +150,15 @@ export const AuthProvider = ({ children }) => {
 
     getInitialSession()
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session)
-
-        if (event === 'SIGNED_UP') {
-          console.log('User signed up - waiting for email verification')
-          setUser(null)
-          setProfile(null)
-        } else if (event === 'SIGNED_IN' && session?.user) {
+        if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user)
-          console.log('Loading profile for user:', session.user.id)
           const userProfile = await getUserProfile(session.user.id)
-
-          if (!userProfile) {
-            console.warn("No profile found for user:", session.user.id)
-            setProfile({ role: "unknown", first_name: "User" }) // fallback
-          } else {
-            console.log('User profile loaded:', userProfile)
-            setProfile(userProfile)
-          }
+          setProfile(userProfile)
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out - clearing state')
           setUser(null)
           setProfile(null)
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed - maintaining current state')
-        } else {
-          if (!session?.user) {
-            console.log('No session found - clearing user state')
-            setUser(null)
-            setProfile(null)
-          }
         }
         setLoading(false)
       }
@@ -97,8 +167,9 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe()
   }, [])
 
-  // ... (rest of your code stays exactly the same)
-  
+  // -----------------
+  // CONTEXT VALUE
+  // -----------------
   const value = {
     user,
     profile,
