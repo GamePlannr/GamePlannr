@@ -102,7 +102,7 @@ export const createCheckoutSession = async (
       throw new Error(errorData.error || 'Failed to create checkout session');
     }
 
-    // ✅ FIX: use `id` instead of `sessionId`
+    // ✅ FIX: use id instead of sessionId
     const { id: stripeSessionId } = await response.json();
     return stripeSessionId;
   } catch (error) {
@@ -120,7 +120,6 @@ export const redirectToCheckout = async (
   sessionTime
 ) => {
   try {
-    // Validate required parameters
     if (!sessionId || !amount || !mentorName) {
       throw new Error('Missing required parameters for checkout');
     }
@@ -134,9 +133,7 @@ export const redirectToCheckout = async (
 
     const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 
-    // Ensure Stripe is initialized
     let stripe = await getStripe();
-
     if (!stripe) {
       console.log('Stripe not initialized, attempting to initialize...');
       stripe = await initializeStripe();
@@ -146,7 +143,6 @@ export const redirectToCheckout = async (
       throw new Error('Stripe failed to initialize. Please check your publishable key.');
     }
 
-    // Create checkout session via Supabase Edge Function
     console.log(
       'Making request to:',
       `${supabaseUrl}/functions/v1/create-checkout-sessions`
@@ -190,10 +186,9 @@ export const redirectToCheckout = async (
       throw new Error(errorData.error || 'Failed to create checkout session');
     }
 
-    // ✅ FIX: use `id` instead of `sessionId`
+    // ✅ FIX: use id instead of sessionId
     const { id: stripeSessionId } = await response.json();
 
-    // Redirect to Stripe Checkout
     const { error } = await stripe.redirectToCheckout({
       sessionId: stripeSessionId,
     });
