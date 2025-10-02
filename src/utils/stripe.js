@@ -1,34 +1,22 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from './supabase';
 
-// Initialize Stripe with your publishable key
-const stripePublishableKey =
-  process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY ||
-  'pk_test_51S3mRoFUjUaFpWkc8NBUv8EUc03ME8ovMJ4gv7xHXtf8rJBtirhkKx47UMBOyCFgtwR8670fIgmsgUIxYiQPQSYN00qfk3PiOS';
+// ✅ Always require environment variable for Stripe key
+const stripePublishableKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
 
-// Debug logging
-console.log(
-  'Environment variable REACT_APP_STRIPE_PUBLISHABLE_KEY:',
-  process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
-);
-console.log('Using Stripe key:', stripePublishableKey);
-
-// Validate the key format
 if (!stripePublishableKey || !stripePublishableKey.startsWith('pk_')) {
-  console.error('Invalid Stripe publishable key:', stripePublishableKey);
+  throw new Error(
+    'Stripe publishable key is missing or invalid. Make sure REACT_APP_STRIPE_PUBLISHABLE_KEY is set in your environment variables.'
+  );
 }
 
 let stripePromise = null;
 
-// Initialize Stripe with error handling
+// Initialize Stripe
 const initializeStripe = async () => {
   try {
-    if (!stripePublishableKey || !stripePublishableKey.startsWith('pk_')) {
-      throw new Error('Invalid Stripe publishable key');
-    }
-
     stripePromise = await loadStripe(stripePublishableKey);
-    console.log('Stripe initialized successfully');
+    console.log('Stripe initialized successfully with key:', stripePublishableKey);
     return stripePromise;
   } catch (error) {
     console.error('Error initializing Stripe:', error);
@@ -37,7 +25,7 @@ const initializeStripe = async () => {
   }
 };
 
-// Initialize Stripe immediately
+// Initialize Stripe immediately on load
 initializeStripe();
 
 export const getStripe = () => stripePromise;
@@ -61,7 +49,7 @@ export const createCheckoutSession = async (
 
     console.log(
       'Making request to:',
-      `${supabaseUrl}/functions/v1/create-checkout-sessions`
+      `${supabaseUrl}/functions/v1/create-checkout-session`
     );
     console.log('Request data:', {
       sessionId,
@@ -72,7 +60,7 @@ export const createCheckoutSession = async (
     });
 
     const response = await fetch(
-      `${supabaseUrl}/functions/v1/create-checkout-sessions`,
+      `${supabaseUrl}/functions/v1/create-checkout-session`,
       {
         method: 'POST',
         headers: {
@@ -91,20 +79,14 @@ export const createCheckoutSession = async (
       }
     );
 
-    console.log('Response status:', response.status);
-    console.log(
-      'Response headers:',
-      Object.fromEntries(response.headers.entries())
-    );
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to create checkout session');
     }
 
-    // ✅ FIX: use id instead of sessionId
-    const { id: stripeSessionId } = await response.json();
-    return stripeSessionId;
+    // Stripe function returns { url: ... }
+    const { url } = await response.json();
+    return url;
   } catch (error) {
     console.error('Error creating checkout session:', error);
     throw error;
@@ -131,74 +113,22 @@ export const redirectToCheckout = async (
     console.log('- Date:', sessionDate);
     console.log('- Time:', sessionTime);
 
-    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-
-    let stripe = await getStripe();
-    if (!stripe) {
-      console.log('Stripe not initialized, attempting to initialize...');
-      stripe = await initializeStripe();
-    }
-
-    if (!stripe) {
-      throw new Error('Stripe failed to initialize. Please check your publishable key.');
-    }
-
-    console.log(
-      'Making request to:',
-      `${supabaseUrl}/functions/v1/create-checkout-sessions`
-    );
-    console.log('Request data:', {
+    const checkoutUrl = await createCheckoutSession(
       sessionId,
       amount,
       mentorName,
       sessionDate,
-      sessionTime,
-    });
-
-    const response = await fetch(
-      `${supabaseUrl}/functions/v1/create-checkout-sessions`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${
-            (await supabase.auth.getSession()).data.session?.access_token
-          }`,
-        },
-        body: JSON.stringify({
-          sessionId,
-          amount,
-          mentorName,
-          sessionDate,
-          sessionTime,
-        }),
-      }
+      sessionTime
     );
 
-    console.log('Response status:', response.status);
-    console.log(
-      'Response headers:',
-      Object.fromEntries(response.headers.entries())
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create checkout session');
+    if (!checkoutUrl) {
+      throw new Error('No checkout URL returned from function');
     }
 
-    // ✅ FIX: use id instead of sessionId
-    const { id: stripeSessionId } = await response.json();
-
-    const { error } = await stripe.redirectToCheckout({
-      sessionId: stripeSessionId,
-    });
-
-    if (error) {
-      console.error('Error redirecting to checkout:', error);
-      throw new Error(`Checkout error: ${error.message}`);
-    }
+    // Redirect browser to Stripe Checkout
+    window.location.href = checkoutUrl;
   } catch (error) {
     console.error('Error in redirectToCheckout:', error);
-    throw error;
+    alert('Unable to start payment. Please try again.');
   }
 };
