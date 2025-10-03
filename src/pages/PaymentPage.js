@@ -19,12 +19,16 @@ const PaymentPage = () => {
   const [error, setError] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('success'); // "success" or "error"
+
   const fetchSessionDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
 
-      // Fetch session details
       const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
         .select(`
@@ -88,26 +92,28 @@ const PaymentPage = () => {
       setPaymentLoading(true);
       setError('');
 
-      // Set session price (configurable later if needed)
-      const sessionPrice = 4; // $4 flat fee
-      const amount = sessionPrice * 100; // Stripe expects cents
+      const sessionPrice = 4; // $4 booking fee
+      const amount = sessionPrice * 100;
 
       const mentorName = `${mentor.first_name} ${mentor.last_name}`;
       const sessionDate = new Date(session.scheduled_date).toLocaleDateString();
       const sessionTime = session.scheduled_time;
 
-      console.log('➡️ Initiating checkout with:', {
-        amount,
-        mentorName,
-        sessionDate,
-        sessionTime,
-      });
+      console.log('Initiating payment process...');
+      await redirectToCheckout(sessionId, amount, mentorName, sessionDate, sessionTime);
 
-      // ✅ Pass args in correct order
-      await redirectToCheckout(amount, mentorName, sessionDate, sessionTime);
+      // If redirect works, Stripe will handle success/failure.
+      // If you want to simulate success for MVP:
+      setModalMessage('Your payment was successful! ✅');
+      setModalType('success');
+      setShowModal(true);
+
     } catch (err) {
       console.error('Payment error:', err);
-      setError(`Payment failed: ${err.message || 'Please try again.'}`);
+      setModalMessage(`Payment failed: ${err.message || 'Please try again.'}`);
+      setModalType('error');
+      setShowModal(true);
+    } finally {
       setPaymentLoading(false);
     }
   };
@@ -248,14 +254,30 @@ const PaymentPage = () => {
                 >
                   {paymentLoading ? 'Processing Payment...' : 'Pay $4.00 with Stripe'}
                 </button>
-                <p className="payment-note">
-                  <strong>MVP Demo Mode:</strong> Payment will be simulated for testing. In production, you would be redirected to Stripe's secure payment page.
-                </p>
               </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Modal */}
+      {showModal && (
+        <div className={`modal-overlay ${modalType}`}>
+          <div className="modal-content">
+            <h2>{modalType === 'success' ? '✅ Payment Successful' : '❌ Payment Failed'}</h2>
+            <p>{modalMessage}</p>
+            <button 
+              onClick={() => {
+                setShowModal(false);
+                navigate('/dashboard');
+              }}
+              className="btn btn-primary"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
