@@ -1,18 +1,19 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from './supabase';
 
-// ✅ Always require environment variable for Stripe key
+// ✅ Require publishable key from environment
 const stripePublishableKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
 
 if (!stripePublishableKey || !stripePublishableKey.startsWith('pk_')) {
   throw new Error(
-    'Stripe publishable key is missing or invalid. Make sure REACT_APP_STRIPE_PUBLISHABLE_KEY is set in your Netlify environment variables.'
+    'Stripe publishable key is missing or invalid. ' +
+    'Set REACT_APP_STRIPE_PUBLISHABLE_KEY in your Netlify environment variables.'
   );
 }
 
 let stripePromise = null;
 
-// Initialize Stripe.js
+// ✅ Initialize Stripe.js once
 const initializeStripe = async () => {
   if (!stripePromise) {
     stripePromise = await loadStripe(stripePublishableKey);
@@ -24,7 +25,7 @@ const initializeStripe = async () => {
 export const getStripe = () => initializeStripe();
 
 /**
- * Call Supabase Edge Function to create a checkout session
+ * 🔹 Call Supabase Edge Function to create a Checkout Session
  */
 export const createCheckoutSession = async (
   amount,
@@ -34,6 +35,10 @@ export const createCheckoutSession = async (
 ) => {
   const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 
+  if (!supabaseUrl) {
+    throw new Error('Missing REACT_APP_SUPABASE_URL in environment variables.');
+  }
+
   console.log('➡️ Creating checkout session with:', {
     amount,
     mentorName,
@@ -41,36 +46,52 @@ export const createCheckoutSession = async (
     sessionTime,
   });
 
+  // Get the current user's auth token
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
 
-  const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-sessions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
-    },
-    body: JSON.stringify({
-      amount,
-      mentorName,
-      sessionDate,
-      sessionTime,
-    }),
-  });
+  // Call Supabase Edge Function
+  const response = await fetch(
+    `${supabaseUrl}/functions/v1/create-checkout-sessions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: JSON.stringify({
+        amount,
+        mentorName,
+        sessionDate,
+        sessionTime,
+      }),
+    }
+  );
 
   if (!response.ok) {
-    const errorData = await response.json();
-    console.error('❌ Failed to create checkout session:', errorData);
-    throw new Error(errorData.error || 'Failed to create checkout session');
+    let errorMessage = 'Failed to create checkout session';
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.error || errorMessage;
+    } catch {
+      // ignore if body not JSON
+    }
+    console.error('❌ Checkout session error:', errorMessage);
+    throw new Error(errorMessage);
   }
 
+  // ✅ Get sessionId from Supabase function
   const { sessionId } = await response.json();
+  if (!sessionId) {
+    throw new Error('No sessionId returned from Supabase function.');
+  }
+
   console.log('✅ Got Stripe sessionId:', sessionId);
   return sessionId;
 };
 
 /**
- * Redirect to Stripe Checkout
+ * 🔹 Redirect user to Stripe Checkout
  */
 export const redirectToCheckout = async (
   amount,
@@ -81,14 +102,14 @@ export const redirectToCheckout = async (
   try {
     const stripe = await getStripe();
 
-    const stripeSessionId = await createCheckoutSession(
+    const sessionId = await createCheckoutSession(
       amount,
       mentorName,
       sessionDate,
       sessionTime
     );
 
-    const { error } = await stripe.redirectToCheckout({ sessionId: stripeSessionId });
+    const { error } = await stripe.redirectToCheckout({ sessionId });
 
     if (error) {
       console.error('❌ Error redirecting to checkout:', error);
