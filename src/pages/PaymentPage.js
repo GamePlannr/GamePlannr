@@ -19,11 +19,6 @@ const PaymentPage = () => {
   const [error, setError] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
-  // Modal state
-  const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
-  const [modalType, setModalType] = useState('success'); // "success" or "error"
-
   const fetchSessionDetails = useCallback(async () => {
     try {
       setLoading(true);
@@ -92,28 +87,18 @@ const PaymentPage = () => {
       setPaymentLoading(true);
       setError('');
 
-      const sessionPrice = 4; // $4 booking fee
-      const amount = sessionPrice * 100;
+      // MVP price is fixed at $4 (in cents for Stripe)
+      const amount = 400;
 
       const mentorName = `${mentor.first_name} ${mentor.last_name}`;
       const sessionDate = new Date(session.scheduled_date).toLocaleDateString();
       const sessionTime = session.scheduled_time;
 
-      console.log('Initiating payment process...');
-      await redirectToCheckout(sessionId, amount, mentorName, sessionDate, sessionTime);
-
-      // If redirect works, Stripe will handle success/failure.
-      // If you want to simulate success for MVP:
-      setModalMessage('Your payment was successful! ✅');
-      setModalType('success');
-      setShowModal(true);
-
+      console.log('💳 Initiating payment process...');
+      await redirectToCheckout(amount, mentorName, sessionDate, sessionTime);
     } catch (err) {
       console.error('Payment error:', err);
-      setModalMessage(`Payment failed: ${err.message || 'Please try again.'}`);
-      setModalType('error');
-      setShowModal(true);
-    } finally {
+      setError(`Payment failed: ${err.message || 'Please try again.'}`);
       setPaymentLoading(false);
     }
   };
@@ -128,9 +113,7 @@ const PaymentPage = () => {
     });
   };
 
-  const formatTime = (timeString) => {
-    return formatTime12Hour(timeString);
-  };
+  const formatTime = (timeString) => formatTime12Hour(timeString);
 
   if (loading) {
     return (
@@ -182,7 +165,6 @@ const PaymentPage = () => {
   return (
     <div className="payment-page">
       <Navbar />
-
       <main className="payment-main">
         <div className="payment-container">
           <div className="payment-header">
@@ -259,26 +241,6 @@ const PaymentPage = () => {
           </div>
         </div>
       </main>
-
-      {/* Modal */}
-      {showModal && (
-        <div className={`modal-overlay ${modalType}`}>
-          <div className="modal-content">
-            <h2>{modalType === 'success' ? '✅ Payment Successful' : '❌ Payment Failed'}</h2>
-            <p>{modalMessage}</p>
-            <button 
-              onClick={() => {
-                setShowModal(false);
-                navigate('/dashboard');
-              }}
-              className="btn btn-primary"
-            >
-              Go to Dashboard
-            </button>
-          </div>
-        </div>
-      )}
-
       <Footer />
     </div>
   );
