@@ -1,15 +1,18 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from './supabase';
 
+// ✅ Publishable key comes from Netlify environment variables
 const stripePublishableKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
 
 if (!stripePublishableKey || !stripePublishableKey.startsWith('pk_')) {
   throw new Error(
-    'Stripe publishable key is missing or invalid. Make sure REACT_APP_STRIPE_PUBLISHABLE_KEY is set in Netlify.'
+    'Stripe publishable key is missing or invalid. Make sure REACT_APP_STRIPE_PUBLISHABLE_KEY is set in your Netlify environment variables.'
   );
 }
 
 let stripePromise = null;
+
+// Initialize Stripe.js
 const initializeStripe = async () => {
   if (!stripePromise) {
     stripePromise = await loadStripe(stripePublishableKey);
@@ -17,8 +20,12 @@ const initializeStripe = async () => {
   }
   return stripePromise;
 };
+
 export const getStripe = () => initializeStripe();
 
+/**
+ * Call Supabase Edge Function to create a checkout session
+ */
 export const createCheckoutSession = async (
   amount,
   mentorName,
@@ -27,11 +34,18 @@ export const createCheckoutSession = async (
 ) => {
   const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 
+  console.log('➡️ Creating checkout session with:', {
+    amount,
+    mentorName,
+    sessionDate,
+    sessionTime,
+  });
+
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
 
   const response = await fetch(
-    `${supabaseUrl}/functions/v1/create-checkout-sessions`,
+    `${supabaseUrl}/functions/v1/create-checkout-session`, // ✅ singular now
     {
       method: 'POST',
       headers: {
@@ -53,10 +67,14 @@ export const createCheckoutSession = async (
     throw new Error(errorData.error || 'Failed to create checkout session');
   }
 
-  const { sessionId, url } = await response.json();
-  return { sessionId, url };
+  const { sessionId } = await response.json();
+  console.log('✅ Got Stripe sessionId:', sessionId);
+  return sessionId;
 };
 
+/**
+ * Redirect to Stripe Checkout
+ */
 export const redirectToCheckout = async (
   amount,
   mentorName,
@@ -66,21 +84,15 @@ export const redirectToCheckout = async (
   try {
     const stripe = await getStripe();
 
-    const { sessionId, url } = await createCheckoutSession(
+    const stripeSessionId = await createCheckoutSession(
       amount,
       mentorName,
       sessionDate,
       sessionTime
     );
 
-    // ✅ If Stripe returns a URL, go directly there
-    if (url) {
-      window.location.href = url;
-      return;
-    }
+    const { error } = await stripe.redirectToCheckout({ sessionId: stripeSessionId });
 
-    // ✅ Otherwise, fallback to Stripe.js redirect
-    const { error } = await stripe.redirectToCheckout({ sessionId });
     if (error) {
       console.error('❌ Error redirecting to checkout:', error);
       alert(`Checkout error: ${error.message}`);
