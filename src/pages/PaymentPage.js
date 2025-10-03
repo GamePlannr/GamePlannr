@@ -12,7 +12,7 @@ const PaymentPage = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  
+
   const [session, setSession] = useState(null);
   const [mentor, setMentor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -88,16 +88,23 @@ const PaymentPage = () => {
       setPaymentLoading(true);
       setError('');
 
-      // Set session price (you can make this configurable)
-      const sessionPrice = 4; // $4 per session for MVP
-      const amount = sessionPrice * 100; // Convert to cents
+      // Set session price (configurable later if needed)
+      const sessionPrice = 4; // $4 flat fee
+      const amount = sessionPrice * 100; // Stripe expects cents
 
       const mentorName = `${mentor.first_name} ${mentor.last_name}`;
       const sessionDate = new Date(session.scheduled_date).toLocaleDateString();
       const sessionTime = session.scheduled_time;
 
-      console.log('Initiating payment process...');
-      await redirectToCheckout(sessionId, amount, mentorName, sessionDate, sessionTime);
+      console.log('➡️ Initiating checkout with:', {
+        amount,
+        mentorName,
+        sessionDate,
+        sessionTime,
+      });
+
+      // ✅ Pass args in correct order
+      await redirectToCheckout(amount, mentorName, sessionDate, sessionTime);
     } catch (err) {
       console.error('Payment error:', err);
       setError(`Payment failed: ${err.message || 'Please try again.'}`);
@@ -169,7 +176,7 @@ const PaymentPage = () => {
   return (
     <div className="payment-page">
       <Navbar />
-      
+
       <main className="payment-main">
         <div className="payment-container">
           <div className="payment-header">
