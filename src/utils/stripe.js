@@ -14,7 +14,13 @@ const initializeStripe = async () => {
 
 export const getStripe = () => initializeStripe();
 
-export const createCheckoutSession = async (sessionId, amount, mentorName, sessionDate, sessionTime) => {
+export const createCheckoutSession = async (
+  sessionId,
+  amount,
+  mentorName,
+  sessionDate,
+  sessionTime
+) => {
   const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 
   const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-sessions`, {
@@ -33,15 +39,34 @@ export const createCheckoutSession = async (sessionId, amount, mentorName, sessi
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to create checkout session');
+    let errorMessage = 'Failed to create checkout session';
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.error || errorMessage;
+    } catch (err) {
+      console.error('Error parsing error response:', err);
+    }
+    throw new Error(errorMessage);
   }
 
-  const { sessionId: stripeSessionId } = await response.json();
+  const data = await response.json();
+  // Support both { sessionId: "..."} and { id: "..." }
+  const stripeSessionId = data.sessionId || data.id;
+
+  if (!stripeSessionId) {
+    throw new Error('No session ID returned from checkout session API');
+  }
+
   return stripeSessionId;
 };
 
-export const redirectToCheckout = async (sessionId, amount, mentorName, sessionDate, sessionTime) => {
+export const redirectToCheckout = async (
+  sessionId,
+  amount,
+  mentorName,
+  sessionDate,
+  sessionTime
+) => {
   const stripe = await getStripe();
 
   const stripeSessionId = await createCheckoutSession(
