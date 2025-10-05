@@ -21,6 +21,7 @@ const DashboardPage = () => {
   const [recentStatusChanges, setRecentStatusChanges] = useState([]);
   const [dismissedNotices, setDismissedNotices] = useState(new Set());
 
+  // Fetch session requests
   const fetchSessionRequests = useCallback(async () => {
     try {
       setRequestsLoading(true);
@@ -43,19 +44,18 @@ const DashboardPage = () => {
       }
 
       setSessionRequests(data || []);
-      
-      // Check for recent status changes (accepted or declined in last 24 hours)
+
+      // Check for recent status changes
       const recentChanges = (data || []).filter(request => {
         if (request.status === 'accepted' || request.status === 'declined') {
           const updatedAt = new Date(request.updated_at);
           const now = new Date();
           const hoursDiff = (now - updatedAt) / (1000 * 60 * 60);
-          return hoursDiff <= 24; // Show notices for changes in last 24 hours
+          return hoursDiff <= 24;
         }
         return false;
       });
-      
-      // Filter out dismissed notices
+
       const visibleChanges = recentChanges.filter(change => !dismissedNotices.has(change.id));
       setRecentStatusChanges(visibleChanges);
     } catch (err) {
@@ -65,6 +65,7 @@ const DashboardPage = () => {
     }
   }, [user.id, dismissedNotices]);
 
+  // Fetch sessions
   const fetchSessions = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -92,9 +93,10 @@ const DashboardPage = () => {
     }
   }, [user.id]);
 
+  // Fetch ratings
   const fetchRatings = useCallback(async () => {
     if (!user || profile?.role !== 'parent') return;
-    
+
     try {
       const { data, error } = await supabase
         .from('ratings')
@@ -115,6 +117,7 @@ const DashboardPage = () => {
     }
   }, [user, profile]);
 
+  // Rate session
   const handleRateSession = (session) => {
     setSelectedSession(session);
     setRatingModalOpen(true);
@@ -125,25 +128,48 @@ const DashboardPage = () => {
     fetchSessions();
   };
 
+  // ✅ NEW: Handle $4 Stripe payment
+  const handleCompletePayment = async (session) => {
+    try {
+      const response = await fetch(
+        'https://fvmzvkikwesvppfzfmjh.supabase.co/functions/v1/create-checkout-session',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mentorId: session.mentor_id,
+            parentEmail: user.email,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url; // redirect to Stripe Checkout
+      } else {
+        alert('Could not start payment. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error starting payment:', error);
+      alert('Something went wrong. Please try again.');
+    }
+  };
+
   const dismissNotice = (noticeId) => {
     setDismissedNotices(prev => new Set([...prev, noticeId]));
-    // Also update the recentStatusChanges to remove the dismissed notice
     setRecentStatusChanges(prev => prev.filter(change => change.id !== noticeId));
   };
 
   useEffect(() => {
-    // Redirect mentors to mentor dashboard
     if (profile?.role === 'mentor') {
       navigate('/mentor-dashboard');
       return;
     }
 
-    // Check if user came from mentor search with selected mentor
     if (location.state?.selectedMentor) {
       setSelectedMentor(location.state.selectedMentor);
     }
 
-    // Fetch session requests and sessions for parents
     if (profile?.role === 'parent') {
       fetchSessionRequests();
       fetchSessions();
@@ -244,7 +270,7 @@ const DashboardPage = () => {
                 <div className="dashboard-section">
                   <h2>Your Session Requests</h2>
                   <p>View your submitted session requests and their status</p>
-                  
+
                   {requestsLoading ? (
                     <div className="loading-container">
                       <div className="loading-spinner"></div>
@@ -282,7 +308,7 @@ const DashboardPage = () => {
                 <div className="dashboard-section">
                   <h2>Your Sessions</h2>
                   <p>View your confirmed and upcoming sessions</p>
-                  
+
                   {sessions.length === 0 ? (
                     <div className="sessions-placeholder">
                       <p>No confirmed sessions yet. Your accepted requests will appear here.</p>
@@ -303,14 +329,17 @@ const DashboardPage = () => {
                               {session.status === 'confirmed' && '✓ Confirmed'}
                               {session.status === 'completed' && '✓ Completed'}
                             </span>
+
+                            {/* ✅ UPDATED BUTTON */}
                             {session.status === 'awaiting_payment' && (
-                              <Link 
-                                to={`/payment/${session.id}`} 
+                              <button
                                 className="btn btn-payment"
+                                onClick={() => handleCompletePayment(session)}
                               >
                                 Complete Payment
-                              </Link>
+                              </button>
                             )}
+
                             {session.status === 'completed' && (() => {
                               const existingRating = ratings.find(r => r.session?.id === session.id);
                               return existingRating ? (
