@@ -1,88 +1,50 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
 // === Supabase Configuration ===
-// Replace with your actual Supabase project URL and anon key (for hardcoded fallback)
-const fallbackUrl = 'https://fvmzvkikwesvppfzfmjh.supabase.co'
-const fallbackAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2bXp2a2lrd2VzdnBwZnpmbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NjU2ODMsImV4cCI6MjA3MjE0MTY4M30.mrJ6N_I10nYsbWotgvIQr6z4BFDnoxnqOhBLYlyjAyQ'
 
-// Use environment variable if available, fallback to known working values
-const supabaseUrl = (
-  process.env.REACT_APP_SUPABASE_URL?.startsWith('http')
-    ? process.env.REACT_APP_SUPABASE_URL
-    : process.env.REACT_APP_SUPABASE_URL
-      ? `https://${process.env.REACT_APP_SUPABASE_URL}`
-      : fallbackUrl
-)
+// ✅ Use environment variables as primary source
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://yfvdjpxahsovlncayqhg.supabase.co';
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJh...'; // shortened for security
 
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || fallbackAnonKey
+// ✅ Log minimal info (remove anon key exposure)
+console.log('🔧 Using Supabase project:', supabaseUrl);
 
-// === Debug logging ===
-console.log('🔧 Supabase URL:', supabaseUrl)
-console.log('🔧 Supabase Anon Key (first 20 chars):', supabaseAnonKey.substring(0, 20) + '...')
-
-// === Create Supabase client with error handling ===
-let supabase = null
-try {
-  if (supabaseUrl && supabaseAnonKey) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey)
-    console.log('✅ Supabase client created successfully')
-  } else {
-    throw new Error('❌ Missing Supabase URL or anon key')
-  }
-} catch (error) {
-  console.error('❌ Error creating Supabase client:', error)
-
-  // Fallback mock client to avoid app crash
-  supabase = {
-    auth: {
-      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      signUp: () => Promise.resolve({ data: null, error: { message: 'Supabase client creation failed' } }),
-      signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase client creation failed' } }),
-      signOut: () => Promise.resolve({ error: null }),
-      getUser: () => Promise.resolve({ data: { user: null }, error: null })
-    },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: () => Promise.resolve({ data: null, error: { message: 'Supabase client creation failed' } })
-        })
-      }),
-      insert: () => Promise.resolve({ error: { message: 'Supabase client creation failed' } }),
-      update: () => ({
-        eq: () => Promise.resolve({ error: { message: 'Supabase client creation failed' } })
-      })
-    })
-  }
-}
-
-export { supabase }
+// === Create Supabase Client ===
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // === Helpers ===
 
+/**
+ * Get the current authenticated user.
+ */
 export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  if (error) {
-    console.error('❌ Error getting current user:', error)
-    return null
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data?.user || null;
+  } catch (err) {
+    console.error('❌ Error getting current user:', err);
+    return null;
   }
-  return user
-}
+};
 
+/**
+ * Fetch a user profile by ID from the profiles table.
+ */
 export const getUserProfile = async (userId) => {
-  console.log('📥 getUserProfile called with userId:', userId)
+  if (!userId) return null;
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-  console.log('📤 getUserProfile result:', { data, error })
-
-  if (error) {
-    console.error('❌ Error getting user profile:', error)
-    return null
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('❌ Error fetching user profile:', err);
+    return null;
   }
-  return data
-}
+};
