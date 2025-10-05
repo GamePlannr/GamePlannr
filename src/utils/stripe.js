@@ -1,10 +1,12 @@
-export async function redirectToCheckout(sessionId, mentorName, sessionDate, sessionTime) {
+export async function redirectToCheckout(mentorName, sessionDate, sessionTime) {
   try {
     const response = await fetch(
       "https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1/create-checkout-session",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           mentorName,
           sessionDate,
@@ -16,7 +18,8 @@ export async function redirectToCheckout(sessionId, mentorName, sessionDate, ses
     const data = await response.json();
 
     if (data.url) {
-      window.location.href = data.url; // Redirect to Stripe Checkout
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
     } else {
       alert("Unable to start checkout. Please try again.");
       console.error("Stripe response error:", data);
