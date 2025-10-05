@@ -21,7 +21,7 @@ const DashboardPage = () => {
   const [recentStatusChanges, setRecentStatusChanges] = useState([]);
   const [dismissedNotices, setDismissedNotices] = useState(new Set());
 
-  // Fetch session requests
+  // === Fetch Session Requests ===
   const fetchSessionRequests = useCallback(async () => {
     try {
       setRequestsLoading(true);
@@ -65,7 +65,7 @@ const DashboardPage = () => {
     }
   }, [user.id, dismissedNotices]);
 
-  // Fetch sessions
+  // === Fetch Sessions ===
   const fetchSessions = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -93,7 +93,7 @@ const DashboardPage = () => {
     }
   }, [user.id]);
 
-  // Fetch ratings
+  // === Fetch Ratings ===
   const fetchRatings = useCallback(async () => {
     if (!user || profile?.role !== 'parent') return;
 
@@ -117,7 +117,7 @@ const DashboardPage = () => {
     }
   }, [user, profile]);
 
-  // Rate session
+  // === Handle Rating Modal ===
   const handleRateSession = (session) => {
     setSelectedSession(session);
     setRatingModalOpen(true);
@@ -128,11 +128,11 @@ const DashboardPage = () => {
     fetchSessions();
   };
 
-  // ✅ NEW: Handle $4 Stripe payment
+  // === Handle Stripe Payment (LIVE PROJECT) ===
   const handleCompletePayment = async (session) => {
     try {
       const response = await fetch(
-        'https://fvmzvkikwesvppfzfmjh.supabase.co/functions/v1/create-checkout-session',
+        'https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1/create-checkout-session',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -144,22 +144,26 @@ const DashboardPage = () => {
       );
 
       const data = await response.json();
+
       if (data.url) {
-        window.location.href = data.url; // redirect to Stripe Checkout
+        window.location.href = data.url; // Redirect to Stripe Checkout
       } else {
-        alert('Could not start payment. Please try again.');
+        console.error('Stripe response error:', data);
+        alert('Unable to start checkout. Please try again.');
       }
     } catch (error) {
-      console.error('Error starting payment:', error);
-      alert('Something went wrong. Please try again.');
+      console.error('❌ Payment error:', error);
+      alert('Something went wrong while starting checkout. Please try again.');
     }
   };
 
+  // === Handle Notices ===
   const dismissNotice = (noticeId) => {
     setDismissedNotices(prev => new Set([...prev, noticeId]));
     setRecentStatusChanges(prev => prev.filter(change => change.id !== noticeId));
   };
 
+  // === Page Initialization ===
   useEffect(() => {
     if (profile?.role === 'mentor') {
       navigate('/mentor-dashboard');
@@ -177,6 +181,7 @@ const DashboardPage = () => {
     }
   }, [profile, navigate, location.state, fetchSessionRequests, fetchSessions, fetchRatings]);
 
+  // === Loading States ===
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -197,6 +202,7 @@ const DashboardPage = () => {
   const isParent = profile.role === 'parent';
   const isMentor = profile.role === 'mentor';
 
+  // === Render ===
   return (
     <div className="dashboard-page">
       <Navbar />
@@ -330,7 +336,7 @@ const DashboardPage = () => {
                               {session.status === 'completed' && '✓ Completed'}
                             </span>
 
-                            {/* ✅ UPDATED BUTTON */}
+                            {/* ✅ Stripe Payment */}
                             {session.status === 'awaiting_payment' && (
                               <button
                                 className="btn btn-payment"
