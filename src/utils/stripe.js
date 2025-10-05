@@ -1,7 +1,7 @@
 export async function redirectToCheckout(sessionId, mentorName, sessionDate, sessionTime) {
   try {
     const response = await fetch(
-      "https://YOUR_PROJECT_REF.supabase.co/functions/v1/create-checkout-session",
+      "https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1/create-checkout-session",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
