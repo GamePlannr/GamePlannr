@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
-import { redirectToCheckout } from '../utils/stripe';
 import { formatTime12Hour } from '../utils/timeFormat';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -19,6 +18,7 @@ const PaymentPage = () => {
   const [error, setError] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
+  // === Fetch Session Details ===
   const fetchSessionDetails = useCallback(async () => {
     try {
       setLoading(true);
@@ -80,6 +80,7 @@ const PaymentPage = () => {
     fetchSessionDetails();
   }, [user, profile, navigate, fetchSessionDetails]);
 
+  // === Handle Stripe Payment ===
   const handlePayment = async () => {
     if (!session || !mentor) return;
 
@@ -87,15 +88,36 @@ const PaymentPage = () => {
       setPaymentLoading(true);
       setError('');
 
-      // MVP price is fixed at $4 (in cents for Stripe)
-      const amount = 400;
-
       const mentorName = `${mentor.first_name} ${mentor.last_name}`;
       const sessionDate = new Date(session.scheduled_date).toLocaleDateString();
       const sessionTime = session.scheduled_time;
 
       console.log('💳 Initiating payment process...');
-      await redirectToCheckout(amount, mentorName, sessionDate, sessionTime);
+
+      // Create checkout session via Supabase Edge Function (live project)
+      const response = await fetch(
+        'https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1/create-checkout-session',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mentorName,
+            sessionDate,
+            sessionTime,
+            parentEmail: user.email,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url; // redirect to Stripe Checkout
+      } else {
+        console.error('Stripe response error:', data);
+        setError('Unable to start checkout. Please try again.');
+        setPaymentLoading(false);
+      }
     } catch (err) {
       console.error('Payment error:', err);
       setError(`Payment failed: ${err.message || 'Please try again.'}`);
@@ -103,18 +125,20 @@ const PaymentPage = () => {
     }
   };
 
+  // === Formatting Helpers ===
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
   const formatTime = (timeString) => formatTime12Hour(timeString);
 
+  // === Loading / Error States ===
   if (loading) {
     return (
       <div className="payment-page">
@@ -162,6 +186,7 @@ const PaymentPage = () => {
     );
   }
 
+  // === Render Payment Page ===
   return (
     <div className="payment-page">
       <Navbar />
@@ -177,21 +202,26 @@ const PaymentPage = () => {
               <div className="mentor-info">
                 <div className="mentor-avatar">
                   {mentor.profile_picture_url ? (
-                    <img 
-                      src={mentor.profile_picture_url} 
+                    <img
+                      src={mentor.profile_picture_url}
                       alt={`${mentor.first_name} ${mentor.last_name}`}
                       className="mentor-avatar-image"
                     />
                   ) : (
                     <span className="avatar-initials">
-                      {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
+                      {mentor.first_name?.[0] || 'M'}
+                      {mentor.last_name?.[0] || 'M'}
                     </span>
                   )}
                 </div>
                 <div className="mentor-details">
-                  <h3>{mentor.first_name} {mentor.last_name}</h3>
+                  <h3>
+                    {mentor.first_name} {mentor.last_name}
+                  </h3>
                   <p className="mentor-sport">{mentor.sport}</p>
-                  <p className="mentor-location">{mentor.city}, {mentor.state}</p>
+                  <p className="mentor-location">
+                    {mentor.city}, {mentor.state}
+                  </p>
                 </div>
               </div>
 
@@ -229,7 +259,7 @@ const PaymentPage = () => {
               </div>
 
               <div className="payment-actions">
-                <button 
+                <button
                   onClick={handlePayment}
                   disabled={paymentLoading}
                   className="btn btn-payment"
