@@ -10,7 +10,7 @@ const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [session, setSession] = useState(null);
   const [mentor, setMentor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,6 +20,7 @@ const PaymentSuccessPage = () => {
   const stripeSessionId = searchParams.get('session_id');
   const sessionId = searchParams.get('gameplannr_session_id');
 
+  // === Update Supabase session status ===
   const updateSessionStatus = useCallback(async () => {
     if (!sessionId || !user || !stripeSessionId) return;
 
@@ -27,27 +28,26 @@ const PaymentSuccessPage = () => {
       setLoading(true);
       setError('');
 
-      console.log('Processing payment success for session:', sessionId);
-      console.log('Stripe session ID:', stripeSessionId);
+      console.log('✅ Payment confirmed');
+      console.log('🔹 Updating session:', sessionId);
+      console.log('🔹 Stripe session:', stripeSessionId);
 
-      // Update session status to paid
       const { error: updateError } = await supabase
         .from('sessions')
-        .update({ 
+        .update({
           status: 'paid',
           stripe_session_id: stripeSessionId,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', sessionId)
         .eq('parent_id', user.id);
 
       if (updateError) {
-        console.error('Error updating session status:', updateError);
-        // Don't show error, just continue with success message
+        console.error('⚠️ Error updating session:', updateError);
       }
 
-      // Try to fetch session details, but don't fail if not found
-      const { data: sessionData } = await supabase
+      // Fetch updated session details for display
+      const { data: sessionData, error: fetchError } = await supabase
         .from('sessions')
         .select(`
           *,
@@ -63,149 +63,134 @@ const PaymentSuccessPage = () => {
         .eq('parent_id', user.id)
         .single();
 
-      if (sessionData && sessionData.mentor) {
-        console.log('Session data retrieved:', sessionData);
+      if (fetchError) {
+        console.warn('⚠️ Session fetch failed (showing fallback):', fetchError);
+      }
+
+      if (sessionData) {
         setSession(sessionData);
         setMentor(sessionData.mentor);
       } else {
-        // Show generic success message if session not found
-        console.log('Session not found, showing generic success message');
         setSession({
           id: sessionId,
           scheduled_date: new Date().toISOString().split('T')[0],
           scheduled_time: '10:00',
           location: 'To be confirmed',
-          status: 'paid'
+          status: 'paid',
         });
         setMentor({
           first_name: 'Mentor',
           last_name: 'Name',
           sport: 'Sport',
           city: 'City',
-          state: 'State'
+          state: 'State',
         });
       }
 
-      // Set loading to false immediately to show success message
+      // Show success, then redirect
       setLoading(false);
-
-      // Start redirect countdown
       setTimeout(() => {
         setRedirecting(true);
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
+        setTimeout(() => navigate('/dashboard'), 2000);
       }, 3000);
-
     } catch (err) {
-      console.error('Unexpected error:', err);
-      // Even on error, show success message since payment was completed
+      console.error('❌ Unexpected error:', err);
+      setError('Something went wrong processing your payment.');
+
+      // Still show success UI
       setLoading(false);
       setSession({
         id: sessionId || 'unknown',
         scheduled_date: new Date().toISOString().split('T')[0],
         scheduled_time: '10:00',
         location: 'To be confirmed',
-        status: 'paid'
+        status: 'paid',
       });
       setMentor({
         first_name: 'Mentor',
         last_name: 'Name',
         sport: 'Sport',
         city: 'City',
-        state: 'State'
+        state: 'State',
       });
-      
-      // Still redirect after delay
+
+      // Redirect fallback
       setTimeout(() => {
         setRedirecting(true);
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
+        setTimeout(() => navigate('/dashboard'), 2000);
       }, 3000);
     }
   }, [sessionId, user, stripeSessionId, navigate]);
 
+  // === Initialize ===
   useEffect(() => {
-    console.log('PaymentSuccessPage useEffect triggered');
+    console.log('💰 Payment Success Page Loaded');
     console.log('User:', user);
     console.log('Stripe Session ID:', stripeSessionId);
     console.log('GamePlannr Session ID:', sessionId);
 
     if (!user) {
-      console.log('No user, redirecting to signin');
+      console.warn('⚠️ No user logged in, redirecting...');
       navigate('/signin');
       return;
     }
 
-    // Always show success message after a short delay, regardless of session data
-    const showSuccess = () => {
+    if (!sessionId) {
+      console.warn('⚠️ No session ID found — fallback success display');
       setLoading(false);
       setSession({
-        id: sessionId || 'unknown',
+        id: 'unknown',
         scheduled_date: new Date().toISOString().split('T')[0],
         scheduled_time: '10:00',
         location: 'To be confirmed',
-        status: 'paid'
+        status: 'paid',
       });
       setMentor({
         first_name: 'Mentor',
         last_name: 'Name',
         sport: 'Sport',
         city: 'City',
-        state: 'State'
+        state: 'State',
       });
-      
-      // Start redirect countdown
-      setTimeout(() => {
-        setRedirecting(true);
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
-      }, 3000);
-    };
-
-    if (!sessionId) {
-      console.log('No session ID, showing basic success and redirecting to dashboard');
-      showSuccess();
+      setTimeout(() => navigate('/dashboard'), 4000);
       return;
     }
 
-    // Try to update session status, but don't block success message
     updateSessionStatus();
-    
-    // Fallback: show success message after 2 seconds regardless
+
+    // Fallback timeout
     const fallbackTimer = setTimeout(() => {
       if (loading) {
-        console.log('Fallback: showing success message after timeout');
-        showSuccess();
+        console.warn('⏱️ Fallback: forcing success screen');
+        setLoading(false);
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(fallbackTimer);
   }, [user, sessionId, navigate, updateSessionStatus, stripeSessionId, loading]);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+  // === Helpers ===
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
-  };
 
   const formatTime = (timeString) => {
+    if (!timeString) return '';
     const [hours, minutes] = timeString.split(':');
     const date = new Date();
     date.setHours(parseInt(hours), parseInt(minutes));
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     });
   };
 
+  // === Render ===
   if (loading) {
     return (
       <div className="payment-success-page">
@@ -239,15 +224,15 @@ const PaymentSuccessPage = () => {
   return (
     <div className="payment-success-page">
       <Navbar />
-      
+
       <main className="success-main">
         <div className="success-container">
           <div className="success-header">
             <div className="success-icon">✓</div>
             <h1>Payment Successful!</h1>
-            <p>Your training session has been confirmed</p>
+            <p>Your training session has been confirmed.</p>
             {redirecting && (
-              <p className="redirect-message">Redirecting to dashboard in a moment...</p>
+              <p className="redirect-message">Redirecting to dashboard...</p>
             )}
           </div>
 
@@ -256,13 +241,18 @@ const PaymentSuccessPage = () => {
               <div className="mentor-info">
                 <div className="mentor-avatar">
                   <span className="avatar-initials">
-                    {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
+                    {mentor.first_name?.[0] || 'M'}
+                    {mentor.last_name?.[0] || 'M'}
                   </span>
                 </div>
                 <div className="mentor-details">
-                  <h3>{mentor.first_name} {mentor.last_name}</h3>
+                  <h3>
+                    {mentor.first_name} {mentor.last_name}
+                  </h3>
                   <p className="mentor-sport">{mentor.sport}</p>
-                  <p className="mentor-location">{mentor.city}, {mentor.state}</p>
+                  <p className="mentor-location">
+                    {mentor.city}, {mentor.state}
+                  </p>
                 </div>
               </div>
 
@@ -270,11 +260,15 @@ const PaymentSuccessPage = () => {
                 <h4>Session Confirmed</h4>
                 <div className="detail-row">
                   <span className="detail-label">Date:</span>
-                  <span className="detail-value">{formatDate(session.scheduled_date)}</span>
+                  <span className="detail-value">
+                    {formatDate(session.scheduled_date)}
+                  </span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Time:</span>
-                  <span className="detail-value">{formatTime(session.scheduled_time)}</span>
+                  <span className="detail-value">
+                    {formatTime(session.scheduled_time)}
+                  </span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Location:</span>
@@ -282,7 +276,9 @@ const PaymentSuccessPage = () => {
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Status:</span>
-                  <span className="detail-value status-confirmed">✓ Confirmed</span>
+                  <span className="detail-value status-confirmed">
+                    ✓ Confirmed
+                  </span>
                 </div>
               </div>
             </div>
