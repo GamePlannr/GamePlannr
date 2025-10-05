@@ -2,20 +2,25 @@ import { createClient } from '@supabase/supabase-js';
 
 // === Supabase Configuration ===
 
-// ✅ Use environment variables as primary source
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://yfvdjpxahsovlncayqhg.supabase.co';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJh...'; // shortened for security
+// ✅ Always use environment variables first; fallback to live project if not set
+const supabaseUrl =
+  process.env.REACT_APP_SUPABASE_URL ||
+  'https://yfvdjpxahsovlncayqhg.supabase.co';
 
-// ✅ Log minimal info (remove anon key exposure)
+const supabaseAnonKey =
+  process.env.REACT_APP_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmdmRqcHhhaHNvdmxuY2F5cWhnZyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzUyODUxMjAwLCJleHAiOjIwNzg0MjcyMDB9.0pGf-GT1iBg58pgh3kITxqB6JBuY6rPoX5xkxEbiLzA';
+
+// ✅ Minimal debug log — never expose keys in console
 console.log('🔧 Using Supabase project:', supabaseUrl);
 
 // === Create Supabase Client ===
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// === Helpers ===
+// === Helper Functions ===
 
 /**
- * Get the current authenticated user.
+ * Get the currently authenticated user.
  */
 export const getCurrentUser = async () => {
   try {
