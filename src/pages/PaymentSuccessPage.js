@@ -17,10 +17,11 @@ const PaymentSuccessPage = () => {
   const [error, setError] = useState('');
   const [redirecting, setRedirecting] = useState(false);
 
+  // Stripe checkout identifiers
   const stripeSessionId = searchParams.get('session_id');
   const sessionId = searchParams.get('gameplannr_session_id');
 
-  // === Update Supabase session status ===
+  // === Update Supabase session to "paid" ===
   const updateSessionStatus = useCallback(async () => {
     if (!sessionId || !user || !stripeSessionId) return;
 
@@ -28,10 +29,11 @@ const PaymentSuccessPage = () => {
       setLoading(true);
       setError('');
 
-      console.log('✅ Payment confirmed');
-      console.log('🔹 Updating session:', sessionId);
-      console.log('🔹 Stripe session:', stripeSessionId);
+      console.log('✅ Payment confirmed via Stripe');
+      console.log('🔹 Updating session in Supabase:', sessionId);
+      console.log('🔹 Stripe session ID:', stripeSessionId);
 
+      // ✅ Update session to "paid" in Supabase
       const { error: updateError } = await supabase
         .from('sessions')
         .update({
@@ -42,11 +44,9 @@ const PaymentSuccessPage = () => {
         .eq('id', sessionId)
         .eq('parent_id', user.id);
 
-      if (updateError) {
-        console.error('⚠️ Error updating session:', updateError);
-      }
+      if (updateError) console.error('⚠️ Session update failed:', updateError);
 
-      // Fetch updated session details for display
+      // ✅ Fetch updated session data for display
       const { data: sessionData, error: fetchError } = await supabase
         .from('sessions')
         .select(`
@@ -56,21 +56,21 @@ const PaymentSuccessPage = () => {
             last_name,
             sport,
             city,
-            state
+            state,
+            profile_picture_url
           )
         `)
         .eq('id', sessionId)
         .eq('parent_id', user.id)
         .single();
 
-      if (fetchError) {
-        console.warn('⚠️ Session fetch failed (showing fallback):', fetchError);
-      }
+      if (fetchError) console.warn('⚠️ Fetch failed, showing fallback:', fetchError);
 
       if (sessionData) {
         setSession(sessionData);
         setMentor(sessionData.mentor);
       } else {
+        // Fallback for display
         setSession({
           id: sessionId,
           scheduled_date: new Date().toISOString().split('T')[0],
@@ -87,7 +87,7 @@ const PaymentSuccessPage = () => {
         });
       }
 
-      // Show success, then redirect
+      // ✅ Show success, then redirect
       setLoading(false);
       setTimeout(() => {
         setRedirecting(true);
@@ -97,7 +97,7 @@ const PaymentSuccessPage = () => {
       console.error('❌ Unexpected error:', err);
       setError('Something went wrong processing your payment.');
 
-      // Still show success UI
+      // Still show success UI fallback
       setLoading(false);
       setSession({
         id: sessionId || 'unknown',
@@ -124,19 +124,19 @@ const PaymentSuccessPage = () => {
 
   // === Initialize ===
   useEffect(() => {
-    console.log('💰 Payment Success Page Loaded');
+    console.log('💰 PaymentSuccessPage loaded');
     console.log('User:', user);
     console.log('Stripe Session ID:', stripeSessionId);
     console.log('GamePlannr Session ID:', sessionId);
 
     if (!user) {
-      console.warn('⚠️ No user logged in, redirecting...');
+      console.warn('⚠️ No user logged in — redirecting');
       navigate('/signin');
       return;
     }
 
     if (!sessionId) {
-      console.warn('⚠️ No session ID found — fallback success display');
+      console.warn('⚠️ No session ID in query — showing fallback');
       setLoading(false);
       setSession({
         id: 'unknown',
@@ -158,10 +158,9 @@ const PaymentSuccessPage = () => {
 
     updateSessionStatus();
 
-    // Fallback timeout
     const fallbackTimer = setTimeout(() => {
       if (loading) {
-        console.warn('⏱️ Fallback: forcing success screen');
+        console.warn('⏱️ Fallback timeout reached, showing success UI');
         setLoading(false);
       }
     }, 3000);
@@ -240,19 +239,23 @@ const PaymentSuccessPage = () => {
             <div className="session-confirmation">
               <div className="mentor-info">
                 <div className="mentor-avatar">
-                  <span className="avatar-initials">
-                    {mentor.first_name?.[0] || 'M'}
-                    {mentor.last_name?.[0] || 'M'}
-                  </span>
+                  {mentor.profile_picture_url ? (
+                    <img
+                      src={mentor.profile_picture_url}
+                      alt={`${mentor.first_name} ${mentor.last_name}`}
+                      className="mentor-avatar-image"
+                    />
+                  ) : (
+                    <span className="avatar-initials">
+                      {mentor.first_name?.[0] || 'M'}
+                      {mentor.last_name?.[0] || 'M'}
+                    </span>
+                  )}
                 </div>
                 <div className="mentor-details">
-                  <h3>
-                    {mentor.first_name} {mentor.last_name}
-                  </h3>
+                  <h3>{mentor.first_name} {mentor.last_name}</h3>
                   <p className="mentor-sport">{mentor.sport}</p>
-                  <p className="mentor-location">
-                    {mentor.city}, {mentor.state}
-                  </p>
+                  <p className="mentor-location">{mentor.city}, {mentor.state}</p>
                 </div>
               </div>
 
@@ -260,15 +263,11 @@ const PaymentSuccessPage = () => {
                 <h4>Session Confirmed</h4>
                 <div className="detail-row">
                   <span className="detail-label">Date:</span>
-                  <span className="detail-value">
-                    {formatDate(session.scheduled_date)}
-                  </span>
+                  <span className="detail-value">{formatDate(session.scheduled_date)}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Time:</span>
-                  <span className="detail-value">
-                    {formatTime(session.scheduled_time)}
-                  </span>
+                  <span className="detail-value">{formatTime(session.scheduled_time)}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Location:</span>
@@ -276,9 +275,7 @@ const PaymentSuccessPage = () => {
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Status:</span>
-                  <span className="detail-value status-confirmed">
-                    ✓ Confirmed
-                  </span>
+                  <span className="detail-value status-confirmed">✓ Confirmed</span>
                 </div>
               </div>
             </div>
