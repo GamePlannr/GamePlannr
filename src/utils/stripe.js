@@ -12,10 +12,11 @@ export async function redirectToCheckout(mentorId, parentEmail) {
     const data = await response.json();
 
     if (data.url) {
-      window.location.href = data.url; // go to Stripe
+      // ✅ Redirect the parent to Stripe checkout page
+      window.location.href = data.url;
     } else {
       alert("Unable to start checkout. Please try again.");
-      console.error("Stripe response error:", data);
+      console.error("❌ Stripe response error:", data);
     }
   } catch (error) {
     console.error("❌ Payment error:", error);
