@@ -20,6 +20,7 @@ const PaymentPage = () => {
 
   // === Fetch Session Details ===
   const fetchSessionDetails = useCallback(async () => {
+    if (!user?.id) return;
     try {
       setLoading(true);
       setError('');
@@ -33,7 +34,8 @@ const PaymentPage = () => {
             last_name,
             sport,
             city,
-            state
+            state,
+            profile_picture_url
           )
         `)
         .eq('id', sessionId)
@@ -64,8 +66,9 @@ const PaymentPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sessionId, user.id]);
+  }, [sessionId, user?.id]);
 
+  // === Initialize Page ===
   useEffect(() => {
     if (!user) {
       navigate('/signin');
@@ -92,9 +95,8 @@ const PaymentPage = () => {
       const sessionDate = new Date(session.scheduled_date).toLocaleDateString();
       const sessionTime = session.scheduled_time;
 
-      console.log('💳 Initiating payment process...');
+      console.log('💳 Starting Stripe checkout...');
 
-      // Create checkout session via Supabase Edge Function (live project)
       const response = await fetch(
         'https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1/create-checkout-session',
         {
@@ -105,6 +107,7 @@ const PaymentPage = () => {
             sessionDate,
             sessionTime,
             parentEmail: user.email,
+            sessionId: session.id,
           }),
         }
       );
@@ -116,16 +119,16 @@ const PaymentPage = () => {
       } else {
         console.error('Stripe response error:', data);
         setError('Unable to start checkout. Please try again.');
-        setPaymentLoading(false);
       }
     } catch (err) {
-      console.error('Payment error:', err);
+      console.error('❌ Payment error:', err);
       setError(`Payment failed: ${err.message || 'Please try again.'}`);
+    } finally {
       setPaymentLoading(false);
     }
   };
 
-  // === Formatting Helpers ===
+  // === Helpers ===
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -215,13 +218,9 @@ const PaymentPage = () => {
                   )}
                 </div>
                 <div className="mentor-details">
-                  <h3>
-                    {mentor.first_name} {mentor.last_name}
-                  </h3>
+                  <h3>{mentor.first_name} {mentor.last_name}</h3>
                   <p className="mentor-sport">{mentor.sport}</p>
-                  <p className="mentor-location">
-                    {mentor.city}, {mentor.state}
-                  </p>
+                  <p className="mentor-location">{mentor.city}, {mentor.state}</p>
                 </div>
               </div>
 
