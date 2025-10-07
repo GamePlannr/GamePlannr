@@ -101,7 +101,12 @@ const PaymentPage = () => {
         'https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1/create-checkout-session',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            // 👇 Required by Supabase Edge Functions for frontend calls
+            apikey: process.env.REACT_APP_SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
           body: JSON.stringify({
             mentorName,
             sessionDate,
@@ -114,11 +119,12 @@ const PaymentPage = () => {
 
       const data = await response.json();
 
-      if (data.url) {
+      if (response.ok && data.url) {
+        console.log('✅ Redirecting to Stripe checkout...');
         window.location.href = data.url; // redirect to Stripe Checkout
       } else {
         console.error('Stripe response error:', data);
-        setError('Unable to start checkout. Please try again.');
+        setError(data.error || 'Unable to start checkout. Please try again.');
       }
     } catch (err) {
       console.error('❌ Payment error:', err);
@@ -218,9 +224,13 @@ const PaymentPage = () => {
                   )}
                 </div>
                 <div className="mentor-details">
-                  <h3>{mentor.first_name} {mentor.last_name}</h3>
+                  <h3>
+                    {mentor.first_name} {mentor.last_name}
+                  </h3>
                   <p className="mentor-sport">{mentor.sport}</p>
-                  <p className="mentor-location">{mentor.city}, {mentor.state}</p>
+                  <p className="mentor-location">
+                    {mentor.city}, {mentor.state}
+                  </p>
                 </div>
               </div>
 
@@ -228,11 +238,15 @@ const PaymentPage = () => {
                 <h4>Session Details</h4>
                 <div className="detail-row">
                   <span className="detail-label">Date:</span>
-                  <span className="detail-value">{formatDate(session.scheduled_date)}</span>
+                  <span className="detail-value">
+                    {formatDate(session.scheduled_date)}
+                  </span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Time:</span>
-                  <span className="detail-value">{formatTime(session.scheduled_time)}</span>
+                  <span className="detail-value">
+                    {formatTime(session.scheduled_time)}
+                  </span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Location:</span>
