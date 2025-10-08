@@ -1,0 +1,11 @@
+{
+  "name": "netlify-functions",
+  "version": "1.0.0",
+  "description": "Stripe + Supabase Netlify functions",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "stripe": "^14.0.0",
+    "@supabase/supabase-js": "^2.43.0"
+  }
+}
