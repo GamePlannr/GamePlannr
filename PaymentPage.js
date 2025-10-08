@@ -1,0 +1,280 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../utils/supabase';
+import { formatTime12Hour } from '../utils/timeFormat';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import './PaymentPage.css';
+
+const FUNCTIONS_BASE_URL = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL || 'https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1';
+
+const PaymentPage = () => {
+  const { sessionId } = useParams();
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
+
+  const [session, setSession] = useState(null);
+  const [mentor, setMentor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
+  // === Fetch Session Details ===
+  const fetchSessionDetails = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      setLoading(true);
+      setError('');
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('sessions')
+        .select(`
+          *,
+          mentor:mentor_id (
+            first_name,
+            last_name,
+            sport,
+            city,
+            state,
+            profile_picture_url
+          )
+        `)
+        .eq('id', sessionId)
+        .eq('parent_id', user.id)
+        .single();
+
+      if (sessionError) {
+        console.error('Error fetching session:', sessionError);
+        setError('Session not found or you do not have permission to view it.');
+        return;
+      }
+
+      if (!sessionData) {
+        setError('Session not found.');
+        return;
+      }
+
+      if (sessionData.status !== 'awaiting_payment') {
+        setError('This session is not awaiting payment.');
+        return;
+      }
+
+      setSession(sessionData);
+      setMentor(sessionData.mentor);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('Failed to load session details.');
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId, user?.id]);
+
+  // === Initialize Page ===
+  useEffect(() => {
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
+
+    if (profile?.role !== 'parent') {
+      navigate('/dashboard');
+      return;
+    }
+
+    fetchSessionDetails();
+  }, [user, profile, navigate, fetchSessionDetails]);
+
+  // === Handle Stripe Payment ===
+  const handlePayment = async () => {
+    if (!session || !mentor) return;
+
+    try {
+      setPaymentLoading(true);
+      setError('');
+
+      const mentorName = `${mentor.first_name} ${mentor.last_name}`;
+      const sessionDate = new Date(session.scheduled_date).toLocaleDateString();
+      const sessionTime = session.scheduled_time;
+
+      console.log('💳 Starting Stripe checkout...');
+
+      const response = await fetch(
+        `{FUNCTIONS_BASE_URL}/create-checkout-session`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mentorName,
+            sessionDate,
+            sessionTime,
+            parentEmail: user.email,
+            sessionId: session.id,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url; // redirect to Stripe Checkout
+      } else {
+        console.error('Stripe response error:', data);
+        setError('Unable to start checkout. Please try again.');
+      }
+    } catch (err) {
+      console.error('❌ Payment error:', err);
+      setError(`Payment failed: ${err.message || 'Please try again.'}`);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // === Helpers ===
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (timeString) => formatTime12Hour(timeString);
+
+  // === Loading / Error States ===
+  if (loading) {
+    return (
+      <div className="payment-page">
+        <Navbar />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading session details...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="payment-page">
+        <Navbar />
+        <div className="error-container">
+          <div className="error-icon">!</div>
+          <h2>Payment Error</h2>
+          <p>{error}</p>
+          <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
+            Return to Dashboard
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!session || !mentor) {
+    return (
+      <div className="payment-page">
+        <Navbar />
+        <div className="error-container">
+          <div className="error-icon">!</div>
+          <h2>Session Not Found</h2>
+          <p>The session you're looking for could not be found.</p>
+          <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
+            Return to Dashboard
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // === Render Payment Page ===
+  return (
+    <div className="payment-page">
+      <Navbar />
+      <main className="payment-main">
+        <div className="payment-container">
+          <div className="payment-header">
+            <h1>Complete Your Payment</h1>
+            <p>Secure payment powered by Stripe</p>
+          </div>
+
+          <div className="payment-content">
+            <div className="session-summary">
+              <div className="mentor-info">
+                <div className="mentor-avatar">
+                  {mentor.profile_picture_url ? (
+                    <img
+                      src={mentor.profile_picture_url}
+                      alt={`${mentor.first_name} ${mentor.last_name}`}
+                      className="mentor-avatar-image"
+                    />
+                  ) : (
+                    <span className="avatar-initials">
+                      {mentor.first_name?.[0] || 'M'}
+                      {mentor.last_name?.[0] || 'M'}
+                    </span>
+                  )}
+                </div>
+                <div className="mentor-details">
+                  <h3>{mentor.first_name} {mentor.last_name}</h3>
+                  <p className="mentor-sport">{mentor.sport}</p>
+                  <p className="mentor-location">{mentor.city}, {mentor.state}</p>
+                </div>
+              </div>
+
+              <div className="session-details">
+                <h4>Session Details</h4>
+                <div className="detail-row">
+                  <span className="detail-label">Date:</span>
+                  <span className="detail-value">{formatDate(session.scheduled_date)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Time:</span>
+                  <span className="detail-value">{formatTime(session.scheduled_time)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Location:</span>
+                  <span className="detail-value">{session.location}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="payment-section">
+              <div className="price-breakdown">
+                <h4>Price Breakdown</h4>
+                <div className="price-item">
+                  <span>GamePlannr Booking Fee – Mentor Matching</span>
+                  <span>$4.00</span>
+                </div>
+                <div className="price-item total">
+                  <span>Total</span>
+                  <span>$4.00</span>
+                </div>
+                <p className="payment-clarification">
+                  <strong>Note:</strong> This $4 fee reserves your session. Mentors are paid separately.
+                </p>
+              </div>
+
+              <div className="payment-actions">
+                <button
+                  onClick={handlePayment}
+                  disabled={paymentLoading}
+                  className="btn btn-payment"
+                >
+                  {paymentLoading ? 'Processing Payment...' : 'Pay $4.00 with Stripe'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default PaymentPage;
