@@ -33,55 +33,48 @@ export const handler = async (event) => {
   }
 
   try {
-    // ✅ Optional safety filter: ignore test-mode events in production
-    if (stripeEvent.livemode === false && process.env.NODE_ENV === 'production') {
-      console.log('⚠️ Ignored test-mode event in production.');
-      return { statusCode: 200, body: JSON.stringify({ ignored: true }) };
-    }
+    if (stripeEvent.type === 'checkout.session.completed') {
+      const session = stripeEvent.data.object;
+      const sessionId = session.metadata?.sessionId;
 
-    switch (stripeEvent.type) {
-      case 'checkout.session.completed': {
-        const session = stripeEvent.data.object;
-        console.log('✅ Checkout completed for session:', session.id);
+      console.log('✅ Stripe checkout.session.completed received');
+      console.log('Metadata sessionId:', sessionId);
+      console.log('Stripe Payment Intent ID:', session.payment_intent);
+      console.log('Stripe Session ID:', session.id);
 
-        const sessionId = session.metadata?.sessionId;
-        if (!sessionId) {
-          console.warn('⚠️ No sessionId found in metadata.');
-          break;
-        }
-
-        const { error } = await supabase
-          .from('sessions')
-          .update({
-            status: 'paid',
-            stripe_payment_intent: session.payment_intent,
-            stripe_session_id: session.id,
-            updated_at: new Date(),
-          })
-          .eq('id', sessionId);
-
-        if (error) {
-          console.error('❌ Supabase update error:', error);
-          return { statusCode: 500, body: JSON.stringify({ error: 'Failed to update Supabase.' }) };
-        }
-
-        console.log(`✅ Supabase session ${sessionId} marked as paid.`);
-        break;
+      if (!sessionId) {
+        console.warn('⚠️ No sessionId found in metadata.');
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Missing sessionId in metadata' }),
+        };
       }
 
-      case 'payment_intent.succeeded': {
-        console.log('💰 Payment intent succeeded event received.');
-        break;
+      const { error } = await supabase
+        .from('sessions')
+        .update({
+          status: 'paid',
+          stripe_payment_intent_id: session.payment_intent, // ✅ FIXED HERE
+          stripe_session_id: session.id,
+          updated_at: new Date(),
+        })
+        .eq('id', sessionId);
+
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: `Supabase update failed: ${error.message}` }),
+        };
       }
 
-      default:
-        console.log(`Unhandled Stripe event type: ${stripeEvent.type}`);
+      console.log(`✅ Supabase session ${sessionId} marked as paid.`);
     }
 
     return { statusCode: 200, body: JSON.stringify({ received: true }) };
   } catch (err) {
     console.error('❌ Webhook processing error:', err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Webhook handler failed.' }) };
+    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
 
