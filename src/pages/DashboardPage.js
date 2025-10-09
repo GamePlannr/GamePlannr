@@ -128,28 +128,27 @@ const DashboardPage = () => {
     fetchSessions();
   };
 
-  // === Handle Stripe Payment (LIVE PROJECT) ===
+  // === Handle Stripe Payment (Updated for Netlify) ===
   const handleCompletePayment = async (session) => {
     try {
-      const response = await fetch(
-        'https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1/create-checkout-session',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mentorId: session.mentor_id,
-            parentEmail: user.email,
-          }),
-        }
-      );
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mentorId: session.mentor_id,
+          parentEmail: user.email,
+          sessionId: session.id,
+          amount: session.amount || 50, // fallback for safety
+        }),
+      });
 
       const data = await response.json();
 
-      if (data.url) {
+      if (response.ok && data.url) {
         window.location.href = data.url; // Redirect to Stripe Checkout
       } else {
         console.error('Stripe response error:', data);
-        alert('Unable to start checkout. Please try again.');
+        alert(data.error || 'Unable to start checkout. Please try again.');
       }
     } catch (error) {
       console.error('❌ Payment error:', error);
@@ -182,13 +181,9 @@ const DashboardPage = () => {
   }, [profile, navigate, location.state, fetchSessionRequests, fetchSessions, fetchRatings]);
 
   // === Loading States ===
-  if (loading) {
-    return <div className="loading">Loading...</div>;
-  }
+  if (loading) return <div className="loading">Loading...</div>;
 
-  if (!user) {
-    return <div className="loading">Please sign in to access the dashboard.</div>;
-  }
+  if (!user) return <div className="loading">Please sign in to access the dashboard.</div>;
 
   if (!profile) {
     return (
@@ -202,7 +197,6 @@ const DashboardPage = () => {
   const isParent = profile.role === 'parent';
   const isMentor = profile.role === 'mentor';
 
-  // === Render ===
   return (
     <div className="dashboard-page">
       <Navbar />
@@ -225,92 +219,7 @@ const DashboardPage = () => {
           <div className="dashboard-content">
             {isParent && (
               <div className="parent-dashboard">
-                {/* Recent Status Change Notices */}
-                {recentStatusChanges.length > 0 && (
-                  <div className="status-notices">
-                    <h3>📢 Recent Updates</h3>
-                    {recentStatusChanges.map(change => (
-                      <div key={change.id} className={`status-notice ${change.status}`}>
-                        <div className="notice-content">
-                          {change.status === 'accepted' && (
-                            <>
-                              <span className="notice-icon">✅</span>
-                              <div className="notice-text">
-                                <strong>Great news!</strong> {change.mentor?.first_name} {change.mentor?.last_name} has accepted your {change.mentor?.sport} session request for {new Date(change.preferred_date).toLocaleDateString()}.
-                                <br />
-                                <small>Check your sessions below to complete payment.</small>
-                              </div>
-                            </>
-                          )}
-                          {change.status === 'declined' && (
-                            <>
-                              <span className="notice-icon">❌</span>
-                              <div className="notice-text">
-                                <strong>Update:</strong> {change.mentor?.first_name} {change.mentor?.last_name} is unable to accommodate your {change.mentor?.sport} session request for {new Date(change.preferred_date).toLocaleDateString()}.
-                                <br />
-                                <small>Don't worry! You can find other qualified mentors below.</small>
-                              </div>
-                            </>
-                          )}
-                          <button 
-                            className="dismiss-btn"
-                            onClick={() => dismissNotice(change.id)}
-                            title="Dismiss this notice"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="dashboard-section">
-                  <h2>Find a Mentor</h2>
-                  <p>Search for local sports mentors in your area</p>
-                  <Link to="/mentors" className="btn btn-primary">
-                    Browse Mentors
-                  </Link>
-                </div>
-
-                <div className="dashboard-section">
-                  <h2>Your Session Requests</h2>
-                  <p>View your submitted session requests and their status</p>
-
-                  {requestsLoading ? (
-                    <div className="loading-container">
-                      <div className="loading-spinner"></div>
-                      <p>Loading session requests...</p>
-                    </div>
-                  ) : sessionRequests.length === 0 ? (
-                    <div className="sessions-placeholder">
-                      <p>No session requests yet. Find a mentor to get started!</p>
-                      <Link to="/mentors" className="btn btn-primary">
-                        Find Mentors
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="requests-list">
-                      {sessionRequests.map(request => (
-                        <div key={request.id} className="request-item">
-                          <div className="request-info">
-                            <h4>{request.mentor?.first_name} {request.mentor?.last_name} - {request.mentor?.sport}</h4>
-                            <p className="request-date">{new Date(request.preferred_date).toLocaleDateString()} at {formatTime12Hour(request.preferred_time)}</p>
-                            <p className="request-location">{request.location}</p>
-                          </div>
-                          <div className="request-status">
-                            <span className={`status-badge status-${request.status}`}>
-                              {request.status === 'pending' && '⏳ Pending'}
-                              {request.status === 'accepted' && '✓ Accepted'}
-                              {request.status === 'declined' && '✕ Declined'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
+                {/* Session lists and payment */}
                 <div className="dashboard-section">
                   <h2>Your Sessions</h2>
                   <p>View your confirmed and upcoming sessions</p>
@@ -325,9 +234,12 @@ const DashboardPage = () => {
                         <div key={session.id} className="session-item">
                           <div className="session-info">
                             <h4>{session.mentor?.first_name} {session.mentor?.last_name} - {session.mentor?.sport}</h4>
-                            <p className="session-date">{new Date(session.scheduled_date).toLocaleDateString()} at {formatTime12Hour(session.scheduled_time)}</p>
+                            <p className="session-date">
+                              {new Date(session.scheduled_date).toLocaleDateString()} at {formatTime12Hour(session.scheduled_time)}
+                            </p>
                             <p className="session-location">{session.location}</p>
                           </div>
+
                           <div className="session-status">
                             <span className={`status-badge status-${session.status}`}>
                               {session.status === 'awaiting_payment' && '⏳ Awaiting Payment'}
@@ -373,54 +285,6 @@ const DashboardPage = () => {
                       ))}
                     </div>
                   )}
-                </div>
-
-                <div className="dashboard-section">
-                  <h2>Quick Actions</h2>
-                  <div className="quick-actions">
-                    <Link to="/profile" className="action-card">
-                      <h3>Update Profile</h3>
-                      <p>Keep your information current</p>
-                    </Link>
-                    <Link to="/mentors" className="action-card">
-                      <h3>Find Mentors</h3>
-                      <p>Search by sport and location</p>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {isMentor && (
-              <div className="mentor-dashboard">
-                <div className="dashboard-section">
-                  <h2>Session Requests</h2>
-                  <p>Review and respond to session requests from parents</p>
-                  <div className="requests-placeholder">
-                    <p>No pending requests at the moment.</p>
-                  </div>
-                </div>
-
-                <div className="dashboard-section">
-                  <h2>Your Sessions</h2>
-                  <p>Manage your upcoming and completed sessions</p>
-                  <div className="sessions-placeholder">
-                    <p>No sessions scheduled yet.</p>
-                  </div>
-                </div>
-
-                <div className="dashboard-section">
-                  <h2>Quick Actions</h2>
-                  <div className="quick-actions">
-                    <Link to="/profile" className="action-card">
-                      <h3>Update Profile</h3>
-                      <p>Keep your mentor profile current</p>
-                    </Link>
-                    <Link to="/availability" className="action-card">
-                      <h3>Set Availability</h3>
-                      <p>Update when you're available</p>
-                    </Link>
-                  </div>
                 </div>
               </div>
             )}
