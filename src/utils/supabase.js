@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // === Supabase Configuration ===
 
-// ✅ Always use environment variables first; fallback to live project if not set
+// ✅ Always use environment variables first; fallback to your live project if not set
 const supabaseUrl =
   process.env.REACT_APP_SUPABASE_URL ||
   'https://yfvdjpxahsovlncayqhg.supabase.co';
@@ -11,11 +11,17 @@ const supabaseAnonKey =
   process.env.REACT_APP_SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmdmRqcHhhaHNvdmxuY2F5cWhnZyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzUyODUxMjAwLCJleHAiOjIwNzg0MjcyMDB9.0pGf-GT1iBg58pgh3kITxqB6JBuY6rPoX5xkxEbiLzA';
 
-// ✅ Minimal debug log — never expose keys in console
+// ✅ Minimal debug log — safe, doesn’t expose secret key
 console.log('🔧 Using Supabase project:', supabaseUrl);
 
-// === Create Supabase Client ===
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// === Create Supabase Client (with Auth Config) ===
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true, // ✅ Keep session active after refresh
+    autoRefreshToken: true, // ✅ Refresh expired tokens automatically
+    detectSessionInUrl: true, // ✅ Handle OAuth and password reset redirects
+  },
+});
 
 // === Helper Functions ===
 
