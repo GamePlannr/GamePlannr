@@ -83,7 +83,7 @@ const PaymentPage = () => {
     fetchSessionDetails();
   }, [user, profile, navigate, fetchSessionDetails]);
 
-  // === Handle Stripe Payment ===
+  // === Handle Stripe Payment (Netlify version) ===
   const handlePayment = async () => {
     if (!session || !mentor) return;
 
@@ -95,33 +95,29 @@ const PaymentPage = () => {
       const sessionDate = new Date(session.scheduled_date).toLocaleDateString();
       const sessionTime = session.scheduled_time;
 
-      console.log('💳 Starting Stripe checkout...');
+      console.log('💳 Starting Stripe checkout via Netlify...');
 
-      const response = await fetch(
-        'https://yfvdjpxahsovlncayqhg.supabase.co/functions/v1/create-checkout-session',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // 👇 Required by Supabase Edge Functions for frontend calls
-            apikey: process.env.REACT_APP_SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            mentorName,
-            sessionDate,
-            sessionTime,
-            parentEmail: user.email,
-            sessionId: session.id,
-          }),
-        }
-      );
+      // ✅ Call the Netlify Function (not Supabase)
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mentorName,
+          sessionDate,
+          sessionTime,
+          parentEmail: user.email,
+          sessionId: session.id,
+          amount: 400, // $4.00 reservation fee in cents
+        }),
+      });
 
       const data = await response.json();
 
       if (response.ok && data.url) {
         console.log('✅ Redirecting to Stripe checkout...');
-        window.location.href = data.url; // redirect to Stripe Checkout
+        window.location.href = data.url; // Redirect to Stripe Checkout
       } else {
         console.error('Stripe response error:', data);
         setError(data.error || 'Unable to start checkout. Please try again.');
