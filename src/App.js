@@ -17,36 +17,40 @@ import PaymentPage from './pages/PaymentPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentCancelledPage from './pages/PaymentCancelledPage';
 
-// Protected Route component
+// ✅ Improved Protected Route component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="loading">
+        <p>Loading your account...</p>
+      </div>
+    );
   }
-  
-  return user ? children : <Navigate to="/signin" />;
+
+  // If not logged in, redirect to sign-in
+  if (!user) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  // Otherwise, show the protected page
+  return children;
 };
 
-// Public Route component (redirect to dashboard if already logged in)
-// const PublicRoute = ({ children }) => {
-//   const { user, loading } = useAuth();
-//   
-//   if (loading) {
-//     return <div className="loading">Loading...</div>;
-//   }
-//   
-//   return user ? <Navigate to="/dashboard" /> : children;
-// };
-
-// Public Route component for auth pages (no redirect during signup process)
+// ✅ Public Route component for signup/signin
 const AuthRoute = ({ children }) => {
-  const { loading } = useAuth();
-  
+  const { user, loading } = useAuth();
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
-  
+
+  // If already logged in, redirect to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return children;
 };
 
@@ -56,83 +60,85 @@ function App() {
       <Router>
         <div className="App">
           <Routes>
-            {/* Public routes */}
+            {/* 🌎 Public routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/mentors" element={<MentorSearchPage />} />
-            <Route 
-              path="/request-session/:mentorId" 
-              element={
-                <ProtectedRoute>
-                  <SessionRequestPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/mentor-dashboard" 
-              element={
-                <ProtectedRoute>
-                  <MentorDashboardPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/payment/:sessionId" 
-              element={
-                <ProtectedRoute>
-                  <PaymentPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/payment-success" 
-              element={
-                <ProtectedRoute>
-                  <PaymentSuccessPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/payment-cancelled" 
-              element={
-                <ProtectedRoute>
-                  <PaymentCancelledPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/signup" 
+
+            {/* 🚪 Auth routes (for signup/signin) */}
+            <Route
+              path="/signup"
               element={
                 <AuthRoute>
                   <SignUpPage />
                 </AuthRoute>
-              } 
+              }
             />
-            <Route 
-              path="/signin" 
+            <Route
+              path="/signin"
               element={
                 <AuthRoute>
                   <SignInPage />
                 </AuthRoute>
-              } 
+              }
             />
-            
-            {/* Protected routes */}
-            <Route 
-              path="/dashboard" 
+
+            {/* 🔐 Protected routes (require login) */}
+            <Route
+              path="/request-session/:mentorId"
+              element={
+                <ProtectedRoute>
+                  <SessionRequestPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mentor-dashboard"
+              element={
+                <ProtectedRoute>
+                  <MentorDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment/:sessionId"
+              element={
+                <ProtectedRoute>
+                  <PaymentPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <ProtectedRoute>
+                  <PaymentSuccessPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-cancelled"
+              element={
+                <ProtectedRoute>
+                  <PaymentCancelledPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <DashboardPage />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={
                 <ProtectedRoute>
                   <ProfilePage />
                 </ProtectedRoute>
-              } 
+              }
             />
           </Routes>
         </div>
