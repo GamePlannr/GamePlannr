@@ -20,33 +20,22 @@ import PaymentCancelledPage from './pages/PaymentCancelledPage';
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
-  
+
   return user ? children : <Navigate to="/signin" />;
 };
 
-// Public Route component (redirect to dashboard if already logged in)
-// const PublicRoute = ({ children }) => {
-//   const { user, loading } = useAuth();
-//   
-//   if (loading) {
-//     return <div className="loading">Loading...</div>;
-//   }
-//   
-//   return user ? <Navigate to="/dashboard" /> : children;
-// };
-
-// Public Route component for auth pages (no redirect during signup process)
+// Public Route component for auth pages
 const AuthRoute = ({ children }) => {
   const { loading } = useAuth();
-  
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
-  
+
   return children;
 };
 
@@ -60,79 +49,82 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/mentors" element={<MentorSearchPage />} />
-            <Route 
-              path="/request-session/:mentorId" 
+
+            {/* Session & mentor routes */}
+            <Route
+              path="/request-session/:mentorId"
               element={
                 <ProtectedRoute>
                   <SessionRequestPage />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/mentor-dashboard" 
+            <Route
+              path="/mentor-dashboard"
               element={
                 <ProtectedRoute>
                   <MentorDashboardPage />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/payment/:sessionId" 
+
+            {/* Payment routes */}
+            <Route
+              path="/payment/:sessionId"
               element={
                 <ProtectedRoute>
                   <PaymentPage />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/payment-success" 
-              element={
-                <ProtectedRoute>
-                  <PaymentSuccessPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/payment-cancelled" 
+
+            {/* ⚡ Payment success page should NOT require login
+                so Stripe redirect works even if session expired */}
+            <Route path="/payment-success" element={<PaymentSuccessPage />} />
+
+            <Route
+              path="/payment-cancelled"
               element={
                 <ProtectedRoute>
                   <PaymentCancelledPage />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/signup" 
+
+            {/* Auth routes */}
+            <Route
+              path="/signup"
               element={
                 <AuthRoute>
                   <SignUpPage />
                 </AuthRoute>
-              } 
+              }
             />
-            <Route 
-              path="/signin" 
+            <Route
+              path="/signin"
               element={
                 <AuthRoute>
                   <SignInPage />
                 </AuthRoute>
-              } 
+              }
             />
-            
+
             {/* Protected routes */}
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <DashboardPage />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={
                 <ProtectedRoute>
                   <ProfilePage />
                 </ProtectedRoute>
-              } 
+              }
             />
           </Routes>
         </div>
