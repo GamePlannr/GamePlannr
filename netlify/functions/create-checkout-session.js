@@ -24,8 +24,8 @@ export const handler = async (event) => {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: `Mentor Session: ${mentorName}`,
-            description: `Session on ${sessionDate} at ${sessionTime}`,
+            name: `GamePlannr Booking Fee`,
+            description: `${mentorName} - ${sessionDate} at ${sessionTime}`,
           },
           unit_amount: 400, // $4.00 USD
         },
@@ -38,12 +38,12 @@ export const handler = async (event) => {
       line_items,
       mode: 'payment',
       customer_email: parentEmail,
-      success_url: `${process.env.SITE_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.SITE_URL}/payment-cancelled`,
+      success_url: `${process.env.SITE_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&session_db_id=${sessionId}`,
+      cancel_url: `${process.env.SITE_URL}/dashboard`,
       metadata: { sessionId },
     });
 
-    // Update the Supabase record with the Stripe session ID
+    // Update Supabase with the Stripe session ID
     const { error } = await supabase
       .from('sessions')
       .update({
