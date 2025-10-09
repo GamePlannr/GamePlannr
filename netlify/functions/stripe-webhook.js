@@ -11,7 +11,6 @@ const supabase = createClient(
 );
 
 export const handler = async (event) => {
-  // Stripe requires the raw body, not parsed JSON
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -34,6 +33,12 @@ export const handler = async (event) => {
   }
 
   try {
+    // ✅ Optional safety filter: ignore test-mode events in production
+    if (stripeEvent.livemode === false && process.env.NODE_ENV === 'production') {
+      console.log('⚠️ Ignored test-mode event in production.');
+      return { statusCode: 200, body: JSON.stringify({ ignored: true }) };
+    }
+
     switch (stripeEvent.type) {
       case 'checkout.session.completed': {
         const session = stripeEvent.data.object;
@@ -45,7 +50,6 @@ export const handler = async (event) => {
           break;
         }
 
-        // Update Supabase session record
         const { error } = await supabase
           .from('sessions')
           .update({
@@ -58,13 +62,15 @@ export const handler = async (event) => {
 
         if (error) {
           console.error('❌ Supabase update error:', error);
-          return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Failed to update Supabase.' }),
-          };
+          return { statusCode: 500, body: JSON.stringify({ error: 'Failed to update Supabase.' }) };
         }
 
         console.log(`✅ Supabase session ${sessionId} marked as paid.`);
+        break;
+      }
+
+      case 'payment_intent.succeeded': {
+        console.log('💰 Payment intent succeeded event received.');
         break;
       }
 
@@ -75,14 +81,10 @@ export const handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ received: true }) };
   } catch (err) {
     console.error('❌ Webhook processing error:', err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Webhook handler failed.' }),
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Webhook handler failed.' }) };
   }
 };
 
-// ✅ Ensure Netlify doesn't parse JSON automatically
 export const config = {
   bodyParser: false,
 };
