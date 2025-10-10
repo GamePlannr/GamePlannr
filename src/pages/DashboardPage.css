@@ -1,38 +1,18 @@
 /* =========================================================
-   GAMEPLANNR DASHBOARD PAGE — UPDATED FULL BRAND VERSION
+   GAMEPLANNR DASHBOARD PAGE (light tweaks only)
    ========================================================= */
 
-/* Base layout */
 .dashboard-page {
-  min-height: 100vh;
-  background-color: #F9FBFC;
-  display: flex;
-  flex-direction: column;
+  padding-top: 2rem;
 }
 
-/* Navbar spacing */
-.dashboard-main {
-  flex: 1;
-  padding-top: 100px;
-}
-
-/* Container */
-.dashboard-container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem 1rem 4rem;
-}
-
-/* =========================================================
-   HEADER / HERO SECTION
-   ========================================================= */
 .dashboard-header {
   background: linear-gradient(135deg, #3ED7C6, #28A745);
   color: white;
   text-align: center;
   padding: 3rem 1rem;
-  border-radius: 0 0 24px 24px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
 }
 
 .dashboard-header h1 {
@@ -42,60 +22,12 @@
   margin-bottom: 0.25rem;
 }
 
-.dashboard-header p {
-  font-size: 1.1rem;
-  font-weight: 400;
-  opacity: 0.95;
+.dashboard-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
 }
 
-/* Mentor notice (after selecting) */
-.mentor-selection-notice {
-  margin-top: 1.5rem;
-  background: white;
-  color: #0D1B2A;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.mentor-selection-notice p {
-  margin: 0 0 0.75rem 0;
-}
-
-.mentor-selection-notice .btn {
-  background: #28A745;
-  color: white;
-  font-weight: 600;
-  border-radius: 10px;
-  padding: 0.6rem 1.2rem;
-  text-decoration: none;
-  transition: background 0.25s ease;
-}
-
-.mentor-selection-notice .btn:hover {
-  background: #23923E;
-}
-
-/* =========================================================
-   SECTION TITLES
-   ========================================================= */
-.dashboard-section h2 {
-  font-family: 'Montserrat', sans-serif;
-  color: #0D1B2A;
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-}
-
-.dashboard-section p {
-  color: #555;
-  font-size: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-/* =========================================================
-   SESSION LIST & CARDS
-   ========================================================= */
 .sessions-list {
   display: flex;
   flex-direction: column;
@@ -107,219 +39,11 @@
   border-radius: 16px;
   padding: 1.25rem 1.5rem;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.session-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.session-info h4 {
-  font-weight: 700;
-  color: #0D1B2A;
-  margin-bottom: 4px;
-}
-
-.session-info p {
-  color: #444;
-  font-size: 0.95rem;
-  margin: 2px 0;
-}
-
-/* Status area */
-.session-status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-
-/* =========================================================
-   STATUS BADGES
-   ========================================================= */
-.status-badge {
-  display: inline-block;
-  font-weight: 600;
-  font-size: 0.9rem;
-  border-radius: 30px;
-  padding: 0.35rem 0.9rem;
-  text-transform: capitalize;
-}
-
-.status-awaiting_payment {
-  background: #3ED7C6;
-  color: #0D1B2A;
-}
-
-.status-paid {
-  background: #28A745;
-  color: white;
-}
-
-.status-confirmed {
-  background: #cce5ff;
-  color: #004085;
-}
-
-.status-completed {
-  background: #d1ecf1;
-  color: #0c5460;
-}
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-.btn {
-  display: inline-block;
-  font-weight: 600;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  padding: 0.6rem 1.2rem;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-}
-
-.btn-payment {
-  background: #28A745;
-  color: white;
-}
-
-.btn-payment:hover {
-  background: #23923E;
-  transform: translateY(-2px);
-}
-
-.btn-rate {
-  background: #3ED7C6;
-  color: #0D1B2A;
-}
-
-.btn-rate:hover {
-  background: #32B5A8;
-  color: white;
-  transform: translateY(-2px);
-}
-
-/* =========================================================
-   QUICK ACTIONS
-   ========================================================= */
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
-}
-
-.action-card {
-  background: linear-gradient(135deg, #28A745, #3ED7C6);
-  color: white;
-  border: none;
-  border-radius: 16px;
-  padding: 1.5rem 1rem;
-  text-decoration: none;
-  text-align: center;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-}
-
-.action-card h3 {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
-}
-
-.action-card p {
-  font-size: 0.95rem;
-  opacity: 0.95;
-}
-
-/* =========================================================
-   RATING SECTION
-   ========================================================= */
-.rating-badge {
-  background: #28A745;
-  color: white;
-  font-weight: 600;
-  border-radius: 24px;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.85rem;
-}
-
-.review-text {
-  color: #444;
-  font-style: italic;
-  font-size: 0.9rem;
-  margin-top: 0.25rem;
-}
-
-/* =========================================================
-   PLACEHOLDERS
-   ========================================================= */
-.sessions-placeholder {
-  text-align: center;
-  padding: 2rem 1rem;
-  background: #f1f5f4;
-  border-radius: 12px;
-  border: 2px dashed #c9e7e3;
-  color: #666;
-}
-
-/* =========================================================
-   LOADING
-   ========================================================= */
-.loading {
-  text-align: center;
-  padding: 4rem 1rem;
-  font-weight: 600;
-  color: #0D1B2A;
-}
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-@media (max-width: 768px) {
-  .dashboard-header {
-    padding: 2rem 1rem;
-  }
-
-  .dashboard-header h1 {
-    font-size: 1.8rem;
-  }
-
-  .session-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .session-status {
-    width: 100%;
-    text-align: right;
-    margin-top: 0.75rem;
-  }
-
-  .action-card h3 {
-    font-size: 1.1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .dashboard-section h2 {
-    font-size: 1.3rem;
-  }
 }
