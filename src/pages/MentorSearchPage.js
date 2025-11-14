@@ -6,6 +6,14 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './MentorSearchPage.css';
 
+// ⭐ NEW — Format reviewer names (e.g., "Ryan K.")
+const formatReviewerName = (first, last) => {
+  if (!first) return '';
+  if (!last) return first;
+  const lastInitial = last.charAt(0).toUpperCase();
+  return `${first} ${lastInitial}.`;
+};
+
 const MentorSearchPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -41,7 +49,6 @@ const MentorSearchPage = () => {
       setLoading(true);
       setError('');
 
-      // Fetch only mentors (role = 'mentor') from the profiles table
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -54,13 +61,8 @@ const MentorSearchPage = () => {
         return;
       }
 
-      console.log('Fetched mentors from Supabase:', data);
-
-      // ✅ No longer filter out current user
-      let mentorsData = data || [];
-
-      setMentors(mentorsData);
-      setFilteredMentors(mentorsData);
+      setMentors(data || []);
+      setFilteredMentors(data || []);
     } catch (err) {
       console.error('Unexpected error fetching mentors:', err);
       setError('An unexpected error occurred. Please try again.');
@@ -89,7 +91,6 @@ const MentorSearchPage = () => {
         return;
       }
 
-      // Group ratings by mentor_id
       const ratingsByMentor = {};
       data.forEach(rating => {
         if (!ratingsByMentor[rating.mentor_id]) {
@@ -110,23 +111,22 @@ const MentorSearchPage = () => {
   }, [fetchMentors, fetchMentorRatings]);
 
   useEffect(() => {
-    // Filter mentors based on search criteria
     let filtered = mentors;
 
     if (searchFilters.city) {
-      filtered = filtered.filter(mentor => 
+      filtered = filtered.filter(mentor =>
         mentor.city && mentor.city.toLowerCase().includes(searchFilters.city.toLowerCase())
       );
     }
 
     if (searchFilters.state) {
-      filtered = filtered.filter(mentor => 
+      filtered = filtered.filter(mentor =>
         mentor.state && mentor.state === searchFilters.state
       );
     }
 
     if (searchFilters.sport) {
-      filtered = filtered.filter(mentor => 
+      filtered = filtered.filter(mentor =>
         (mentor.sport && mentor.sport.toLowerCase() === searchFilters.sport.toLowerCase()) ||
         (mentor.additional_sport && mentor.additional_sport.toLowerCase() === searchFilters.sport.toLowerCase())
       );
@@ -144,10 +144,8 @@ const MentorSearchPage = () => {
 
   const handleRequestSession = (mentorId) => {
     if (user) {
-      // User is logged in, redirect to session request page
       navigate(`/request-session/${mentorId}`);
     } else {
-      // User not logged in, redirect to sign up with mentor info
       navigate('/signup', { state: { selectedMentor: mentorId } });
     }
   };
@@ -275,11 +273,14 @@ const MentorSearchPage = () => {
                           <span className="additional-sport">, {mentor.additional_sport}</span>
                         )}
                       </p>
+
                       <p className="mentor-location">{mentor.city}, {mentor.state}</p>
                       <p className="mentor-experience">{mentor.experience || 'Experienced mentor'}</p>
+
                       {mentor.hourly_rate && (
                         <p className="mentor-rate">${mentor.hourly_rate}/hour</p>
                       )}
+
                       {mentor.teaching_areas && mentor.teaching_areas.length > 0 && (
                         <div className="mentor-teaching-areas">
                           <span className="teaching-areas-label">Specializes in:</span>
@@ -293,6 +294,8 @@ const MentorSearchPage = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* ⭐ Mentor Rating Summary */}
                       {(() => {
                         const ratings = mentorRatings[mentor.id] || [];
                         const averageRating = ratings.length > 0 
@@ -307,7 +310,9 @@ const MentorSearchPage = () => {
                                   {'★'.repeat(Math.round(averageRating))}
                                   {'☆'.repeat(5 - Math.round(averageRating))}
                                 </span>
-                                <span className="rating-number">{averageRating} ({ratings.length} review{ratings.length !== 1 ? 's' : ''})</span>
+                                <span className="rating-number">
+                                  {averageRating} ({ratings.length} review{ratings.length !== 1 ? 's' : ''})
+                                </span>
                               </>
                             ) : (
                               <>
@@ -318,9 +323,12 @@ const MentorSearchPage = () => {
                           </div>
                         );
                       })()}
-                      <p className="mentor-bio">{mentor.bio || 'Experienced mentor ready to help young athletes improve their skills.'}</p>
 
-                      {/* Show recent reviews */}
+                      <p className="mentor-bio">
+                        {mentor.bio || 'Experienced mentor ready to help young athletes improve their skills.'}
+                      </p>
+
+                      {/* ⭐ Recent Reviews (UPDATED WITH NAME SHORTENER) */}
                       {(() => {
                         const ratings = mentorRatings[mentor.id] || [];
                         const recentReviews = ratings
@@ -333,14 +341,21 @@ const MentorSearchPage = () => {
                             {recentReviews.map((review, index) => (
                               <div key={index} className="review-item">
                                 <div className="review-header">
+                                  
+                                  {/* ⭐ UPDATED HERE */}
                                   <span className="reviewer-name">
-                                    {review.parent?.first_name} {review.parent?.last_name}
+                                    {formatReviewerName(
+                                      review.parent?.first_name,
+                                      review.parent?.last_name
+                                    )}
                                   </span>
+
                                   <span className="review-rating">
                                     {'★'.repeat(review.rating)}
                                     {'☆'.repeat(5 - review.rating)}
                                   </span>
                                 </div>
+
                                 <p className="review-text">"{review.comment}"</p>
                               </div>
                             ))}
@@ -362,7 +377,6 @@ const MentorSearchPage = () => {
               </div>
             )}
 
-            {/* ✅ Updated "no mentors" message */}
             {!loading && filteredMentors.length === 0 && (
               <div className="no-results">
                 <h3>No mentors in your area yet</h3>
