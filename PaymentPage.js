@@ -1,302 +1,258 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
-import ImageUpload from '../components/ImageUpload';
+import { redirectToCheckout } from '../utils/stripe';
+import { formatTime12Hour } from '../utils/timeFormat';
 import Navbar from '../components/Navbar';
-import './ProfilePage.css';
+import Footer from '../components/Footer';
+import './PaymentPage.css';
 
-// ⭐ NEW — Format reviewer names (e.g., "Ryan K.")
-const formatReviewerName = (first, last) => {
-  if (!first) return '';
-  if (!last) return first;
+const PaymentPage = () => {
+  const { sessionId } = useParams();
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
 
-  const lastInitial = last.charAt(0).toUpperCase();
-  return `${first} ${lastInitial}.`;
-};
-
-const ProfilePage = () => {
-  const { profile, updateProfile } = useAuth();
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    age: '',
-    city: '',
-    state: '',
-    sport: '',
-    additionalSport: '',
-    bio: '',
-    phone: '',
-    experience: '',
-    profilePictureUrl: '',
-    hourlyRate: '',
-    teachingAreas: []
-  });
-  const [loading, setLoading] = useState(false);
+  const [session, setSession] = useState(null);
+  const [mentor, setMentor] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [reviews, setReviews] = useState([]);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
+  const fetchSessionDetails = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      // Fetch session details
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('sessions')
+        .select(`
+          *,
+          mentor:mentor_id (
+            first_name,
+            last_name,
+            sport,
+            city,
+            state
+          )
+        `)
+        .eq('id', sessionId)
+        .eq('parent_id', user.id)
+        .single();
+
+      if (sessionError) {
+        console.error('Error fetching session:', sessionError);
+        setError('Session not found or you do not have permission to view it.');
+        return;
+      }
+
+      if (!sessionData) {
+        setError('Session not found.');
+        return;
+      }
+
+      if (sessionData.status !== 'awaiting_payment') {
+        setError('This session is not awaiting payment.');
+        return;
+      }
+
+      setSession(sessionData);
+      setMentor(sessionData.mentor);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('Failed to load session details.');
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId, user.id]);
 
   useEffect(() => {
-    if (profile) {
-      const profilePictureUrl = profile.profile_picture_url || '';
-      setFormData({
-        firstName: profile.first_name || '',
-        lastName: profile.last_name || '',
-        age: profile.age || '',
-        city: profile.city || '',
-        state: profile.state || '',
-        sport: profile.sport || '',
-        additionalSport: profile.additional_sport || '',
-        bio: profile.bio || '',
-        phone: profile.phone || '',
-        experience: profile.experience || '',
-        profilePictureUrl: profilePictureUrl,
-        hourlyRate: profile.hourly_rate || '',
-        teachingAreas: profile.teaching_areas || []
-      });
-
-      // Check for data URL images
-      if (profilePictureUrl && profilePictureUrl.startsWith('data:')) {
-        handleDataUrlUpload(profilePictureUrl);
-      }
+    if (!user) {
+      navigate('/signin');
+      return;
     }
-  }, [profile]);
 
-  const handleDataUrlUpload = async (dataUrl) => {
+    if (profile?.role !== 'parent') {
+      navigate('/dashboard');
+      return;
+    }
+
+    fetchSessionDetails();
+  }, [user, profile, navigate, fetchSessionDetails]);
+
+  const handlePayment = async () => {
+    if (!session || !mentor) return;
+
     try {
-      const { user } = await supabase.auth.getUser();
-      if (!user) return;
+      setPaymentLoading(true);
+      setError('');
 
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      const fileExt = blob.type.split('/')[1] || 'jpg';
-      const fileName = `${user.data.user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      // Set session price (you can make this configurable)
+      const sessionPrice = 4; // $4 per session for MVP
+      const amount = sessionPrice * 100; // Convert to cents
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, blob);
+      const mentorName = `${mentor.first_name} ${mentor.last_name}`;
+      const sessionDate = new Date(session.scheduled_date).toLocaleDateString();
+      const sessionTime = session.scheduled_time;
 
-      if (uploadError) {
-        console.error('Error uploading profile picture:', uploadError);
-        return;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ profile_picture_url: publicUrl })
-        .eq('id', user.data.user.id);
-
-      if (updateError) {
-        console.error('Error updating profile picture URL:', updateError);
-        return;
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        profilePictureUrl: publicUrl
-      }));
-    } catch (error) {
-      console.error('Error handling data URL upload:', error);
+      console.log('Initiating payment process...');
+      await redirectToCheckout(sessionId, amount, mentorName, sessionDate, sessionTime);
+    } catch (err) {
+      console.error('Payment error:', err);
+      setError(`Payment failed: ${err.message || 'Please try again.'}`);
+      setPaymentLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
-  const handleImageUpload = (imageUrl) => {
-    setFormData(prev => ({
-      ...prev,
-      profilePictureUrl: imageUrl
-    }));
+  const formatTime = (timeString) => {
+    return formatTime12Hour(timeString);
   };
 
-  const fetchReviews = useCallback(async () => {
-    if (!profile || profile.role !== 'mentor') return;
+  if (loading) {
+    return (
+      <div className="payment-page">
+        <Navbar />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading session details...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-    setReviewsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('ratings')
-        .select(`
-          id,
-          rating,
-          comment,
-          created_at,
-          parent:parent_id (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('mentor_id', profile.id)
-        .order('created_at', { ascending: false });
+  if (error) {
+    return (
+      <div className="payment-page">
+        <Navbar />
+        <div className="error-container">
+          <div className="error-icon">!</div>
+          <h2>Payment Error</h2>
+          <p>{error}</p>
+          <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
+            Return to Dashboard
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-      if (error) {
-        console.error('Error fetching reviews:', error);
-        return;
-      }
-
-      setReviews(data || []);
-    } catch (err) {
-      console.error('Error fetching reviews:', err);
-    } finally {
-      setReviewsLoading(false);
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
-
-  const handleTeachingAreaChange = (area) => {
-    setFormData(prev => ({
-      ...prev,
-      teachingAreas: prev.teachingAreas.includes(area)
-        ? prev.teachingAreas.filter(a => a !== area)
-        : [...prev.teachingAreas, area]
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
-
-    try {
-      const updates = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        age: parseInt(formData.age),
-        city: formData.city,
-        state: formData.state,
-        sport: formData.sport,
-        additional_sport: formData.additionalSport || null,
-        bio: formData.bio,
-        phone: formData.phone,
-        experience: formData.experience,
-        profile_picture_url: formData.profilePictureUrl,
-        hourly_rate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : null,
-        teaching_areas: formData.teachingAreas,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await updateProfile(updates);
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('Profile updated successfully!');
-      }
-    } catch (err) {
-      setError('An unexpected error occurred');
-    }
-
-    setLoading(false);
-  };
-
-  const sports = [
-    'Basketball', 'Football', 'Soccer', 'Baseball', 'Tennis', 'Swimming',
-    'Track & Field', 'Volleyball', 'Golf', 'Hockey', 'Lacrosse', 'Wrestling',
-    'Gymnastics', 'Martial Arts', 'Other'
-  ];
-
-  const states = [
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID',
-    'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS',
-    'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK',
-    'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV',
-    'WI', 'WY'
-  ];
-
-  const teachingAreas = [
-    'Offense',
-    'Defense',
-    'Footwork',
-    'Conditioning / Fitness',
-    'Confidence Building',
-    'Teamwork / Communication',
-    'Game IQ / Strategy'
-  ];
-
-  if (!profile) {
-    return <div className="loading">Loading...</div>;
+  if (!session || !mentor) {
+    return (
+      <div className="payment-page">
+        <Navbar />
+        <div className="error-container">
+          <div className="error-icon">!</div>
+          <h2>Session Not Found</h2>
+          <p>The session you're looking for could not be found.</p>
+          <button onClick={() => navigate('/dashboard')} className="btn btn-primary">
+            Return to Dashboard
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   return (
-    <div className="profile-page">
+    <div className="payment-page">
       <Navbar />
 
-      <main className="profile-main">
-        <div className="profile-container">
-          <div className="profile-header">
-            <h1>Profile Settings</h1>
-            <p>Update your personal information and preferences</p>
+      <main className="payment-main">
+        <div className="payment-container">
+          <div className="payment-header">
+            <h1>Complete Your Payment</h1>
+            <p>Secure payment powered by Stripe</p>
           </div>
 
-          {/* ... ALL YOUR EXISTING FORM CODE (unchanged) ... */}
-
-          {/* Reviews Section */}
-          {profile?.role === 'mentor' && (
-            <div className="reviews-section">
-              <h2>Your Reviews</h2>
-              <p>See what parents are saying about your sessions</p>
-
-              {reviewsLoading ? (
-                <div className="loading">Loading reviews...</div>
-              ) : reviews.length > 0 ? (
-                <div className="reviews-list">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="review-item">
-                      <div className="review-header">
-                        <div className="reviewer-info">
-
-                          {/* ⭐ UPDATED HERE */}
-                          <span className="reviewer-name">
-                            {formatReviewerName(
-                              review.parent?.first_name,
-                              review.parent?.last_name
-                            )}
-                          </span>
-
-                          <span className="review-date">
-                            {new Date(review.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        <div className="review-rating">
-                          {'★'.repeat(review.rating)}
-                          {'☆'.repeat(5 - review.rating)}
-                        </div>
-                      </div>
-
-                      {review.comment && (
-                        <p className="review-comment">"{review.comment}"</p>
-                      )}
-                    </div>
-                  ))}
+          <div className="payment-content">
+            <div className="session-summary">
+              <div className="mentor-info">
+                <div className="mentor-avatar">
+                  {mentor.profile_picture_url ? (
+                    <img 
+                      src={mentor.profile_picture_url} 
+                      alt={`${mentor.first_name} ${mentor.last_name}`}
+                      className="mentor-avatar-image"
+                    />
+                  ) : (
+                    <span className="avatar-initials">
+                      {mentor.first_name?.[0] || 'M'}{mentor.last_name?.[0] || 'M'}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <div className="no-reviews">
-                  <p>No reviews yet. Keep delivering great sessions to earn your first review!</p>
+                <div className="mentor-details">
+                  <h3>{mentor.first_name} {mentor.last_name}</h3>
+                  <p className="mentor-sport">{mentor.sport}</p>
+                  <p className="mentor-location">{mentor.city}, {mentor.state}</p>
                 </div>
-              )}
+              </div>
+
+              <div className="session-details">
+                <h4>Session Details</h4>
+                <div className="detail-row">
+                  <span className="detail-label">Date:</span>
+                  <span className="detail-value">{formatDate(session.scheduled_date)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Time:</span>
+                  <span className="detail-value">{formatTime(session.scheduled_time)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Location:</span>
+                  <span className="detail-value">{session.location}</span>
+                </div>
+              </div>
             </div>
-          )}
+
+            <div className="payment-section">
+              <div className="price-breakdown">
+                <h4>Price Breakdown</h4>
+                <div className="price-item">
+                  <span>GamePlannr Booking Fee – Mentor Matching</span>
+                  <span>$4.00</span>
+                </div>
+                <div className="price-item total">
+                  <span>Total</span>
+                  <span>$4.00</span>
+                </div>
+                <p className="payment-clarification">
+                  <strong>Note:</strong> This $4 fee reserves your session. Mentors are paid separately.
+                </p>
+              </div>
+
+              <div className="payment-actions">
+                <button 
+                  onClick={handlePayment}
+                  disabled={paymentLoading}
+                  className="btn btn-payment"
+                >
+                  {paymentLoading ? 'Processing Payment...' : 'Pay $4.00 with Stripe'}
+                </button>
+                <p className="payment-note">
+                  <strong>MVP Demo Mode:</strong> Payment will be simulated for testing. In production, you would be redirected to Stripe's secure payment page.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 };
 
-export default ProfilePage;
+export default PaymentPage;
