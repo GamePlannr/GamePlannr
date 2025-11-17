@@ -32,7 +32,6 @@ const SignUpPage = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Check if user came from mentor search with selected mentor
     if (location.state?.selectedMentor) {
       setSelectedMentor(location.state.selectedMentor);
     }
@@ -75,7 +74,6 @@ const SignUpPage = () => {
     setError('');
     setSuccess('');
 
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -119,9 +117,7 @@ const SignUpPage = () => {
         setError(error.message || 'An error occurred during signup');
       } else {
         setSuccess('Account created successfully! Please check your email to verify your account before signing in.');
-        // Small delay to ensure signout completes before navigation
         setTimeout(() => {
-          // Navigate to sign in with selected mentor info
           if (selectedMentor) {
             navigate('/signin', { state: { selectedMentor } });
           } else {
@@ -137,10 +133,18 @@ const SignUpPage = () => {
     setLoading(false);
   };
 
+  // ✅ UPDATED SPORTS LIST (alphabetical)
   const sports = [
-    'Basketball', 'Football', 'Soccer', 'Baseball', 'Tennis', 'Swimming',
-    'Track & Field', 'Volleyball', 'Golf', 'Hockey', 'Lacrosse', 'Wrestling',
-    'Gymnastics', 'Martial Arts', 'Other'
+    'Baseball',
+    'Basketball',
+    'Football',
+    'Golf',
+    'Gymnastics',
+    'Soccer',
+    'Softball',
+    'Track & Field',
+    'Volleyball',
+    'Wrestling'
   ];
 
   const improvementAreas = [
